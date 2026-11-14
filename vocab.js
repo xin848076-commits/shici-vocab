@@ -370,6 +370,23 @@
     }, 1600);
   }
 
+  // 移动采样：第一次移动指针时再测 40 帧。有些机器静态不卡、一动鼠标就掉帧，
+  // 这时直接降级，比让用户自己去关动效省事。
+  let moveSampled = false;
+  const sampleOnMove = () => {
+    if (moveSampled) return;
+    moveSampled = true;
+    let frames = 0, slow = 0, last = performance.now();
+    const step = now => {
+      const dt = now - last; last = now; frames++;
+      if (dt > 24) slow++;
+      if (frames < 40) { requestAnimationFrame(step); return; }
+      if (slow > 16) doc.classList.add('lite-motion');
+    };
+    requestAnimationFrame(step);
+  };
+  addEventListener('pointermove', sampleOnMove, { passive: true, once: true });
+
   /* ---------- 浸水感：整页水光 + 跟随指针的折射 ---------- */
   const waterLayer = document.createElement('div');
   waterLayer.className = 'water-layer';
@@ -379,28 +396,10 @@
       <i class="water-caustics wave-a"></i>
       <i class="water-caustics wave-b"></i>
       <i class="water-caustics wave-c"></i>
-    </div>
-    <div class="water-defs">
-      <svg focusable="false" aria-hidden="true">
-        <filter id="water-lens" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.009 0.014" numOctaves="2" seed="7" result="noise"/>
-          <feOffset in="noise" dx="0" dy="0" result="flow"/>
-          <feDisplacementMap in="SourceGraphic" in2="flow" scale="0" xChannelSelector="R" yChannelSelector="G"/>
-        </filter>
-      </svg>
     </div>`;
   document.body.append(waterLayer);
 
-  // 局部水透镜：只覆盖指针附近一小片，用 backdrop-filter 折射底下的内容。
-  // 面积小，代价可控；边缘由径向遮罩羽化，所以看不到任何圆形轮廓。
-  const lens = document.createElement('i');
-  lens.className = 'water-lens is-off';
-  lens.setAttribute('aria-hidden', 'true');
-  document.body.append(lens);
-
   const parallax = waterLayer.querySelector('.water-parallax');
-  const lensMap = waterLayer.querySelector('#water-lens feDisplacementMap');
-  const lensFlow = waterLayer.querySelector('#water-lens feOffset');
 
   const toTop = document.createElement('button');
   toTop.type = 'button';
@@ -419,14 +418,6 @@
   const pointer = { x: innerWidth / 2, y: innerHeight * .45, at: -1e9, seen: false };
   let energy = 0;
   let sway = 0;
-  let lensX = pointer.x;
-  let lensY = pointer.y;
-  let lensOpen = 0;
-  let lensScale = 0;
-  let wetEl = null;
-  let wetLostAt = 0;
-  let lastWetCheck = 0;
-  let lastLensPaint = 0;
   let lastPointerAt = -1e9;
   let rafId = 0;
   let lastFrame = performance.now();
@@ -443,23 +434,7 @@
     rafId = requestAnimationFrame(tick);
   };
 
-  // 只有指针落在这几块内容上时，附近的水面才被轻轻带起。
-  const WET_SELECTOR = '.stats > div, .daily-goal, .study-examples, .word-row, .garden-tile, .backup';
-  // 单词卡完全排除：卡片保持清晰，只保留原有的鼠标倾斜与翻面。
-  const DRY_SELECTOR = '#flashcard, .flashcard-wrap';
-  // 指针事件本身就带着命中元素，优先用它，避免每次移动都做 elementFromPoint
-  //（那会强制同步布局，在内容多的页面上是明显的卡顿来源）。
-  const pickWet = target => {
-    const under = target instanceof Element ? target : document.elementFromPoint(pointer.x, pointer.y);
-    const next = under && !under.closest(DRY_SELECTOR) ? under.closest(WET_SELECTOR) : null;
-    if (next) {
-      wetLostAt = 0;
-      wetEl = next;
-    } else if (wetEl && !wetLostAt) {
-      // 指针扫过区块缝隙时留一点余量，水感是慢慢收住而不是突然消失。
-      wetLostAt = performance.now();
-    }
-  };
+  // 指针只用来带动背景视差，不做任何逐帧滤镜计算（那会让核显上的鼠标移动明显发涩）。
 
   addEventListener('pointermove', event => {
     const now = performance.now();
@@ -473,11 +448,6 @@
     pointer.seen = true;
     lastPointerAt = now;
     energy = Math.min(1, energy + .045 + speed * .085);
-    // 直接在指针事件里切换目标，避免等下一帧才响应。
-    if (now - lastWetCheck > 24) {
-      lastWetCheck = now;
-      pickWet(event.target);
-    }
     wake();
   }, { passive: true });
 
@@ -488,12 +458,11 @@
     pointer.seen = true;
     lastPointerAt = pointer.at;
     energy = Math.min(1, energy + .2);
-    pickWet(event.target);
     wake();
   }, { passive: true });
 
   // 指针离开窗口或页面失焦时，水感自然收住，不会留在原地。
-  const leave = () => { wetEl = null; wetLostAt = 0; wake(); };
+  const leave = () => wake();
   addEventListener('pointerleave', leave, { passive: true });
   addEventListener('pointerout', event => { if (!event.relatedTarget) leave(); }, { passive: true });
   addEventListener('mouseleave', leave, { passive: true });
@@ -501,66 +470,20 @@
 
   const tick = now => {
     rafId = 0;
-    if (doc.classList.contains('lite-motion')) { lens.classList.add('is-off'); return; }
+    if (doc.classList.contains('lite-motion')) return;
     const dt = Math.min(48, Math.max(8, now - lastFrame));
     lastFrame = now;
     energy *= Math.pow(.9, dt / 16.7);
     sway *= Math.pow(.88, dt / 16.7);
 
+    // 只改一层 transform：交给合成器处理，不触发重绘，指针再快也不掉帧。
     const nx = pointer.x / vw - .5;
     const ny = pointer.y / vh - .5;
     parallax.style.transform =
       `translate3d(${(nx * 22).toFixed(1)}px, ${(ny * 16 - sway * 26).toFixed(1)}px, 0)`;
 
-    // 指针停住就收住水感：悬停时持续重算 backdrop-filter 会让整页一直重绘，
-    // 是滚动发涩的主要来源，所以只有真正在移动时才展开透镜。
-    const active = pointer.seen && now - pointer.at < 320;
-    if (now - pointer.at < 300 && now - lastWetCheck > 80) {
-      lastWetCheck = now;
-      pickWet();
-    }
-    if (wetEl && wetLostAt && now - wetLostAt > 240) {
-      wetEl = null;
-      wetLostAt = 0;
-    }
-
-    // 开合是渐变的：换到另一块内容时先收住再展开，不会整块突然变形。
-    const wantOpen = active && wetEl ? 1 : 0;
-    lensOpen += (wantOpen - lensOpen) * (1 - Math.pow(.84, dt / 16.7));
-    if (lensOpen < .002 && !wantOpen) lensOpen = 0;
-
-    // 透镜稍微滞后地跟着指针，像水被拖着走；位置也做插值，移动是连续的。
-    const follow = 1 - Math.pow(.72, dt / 16.7);
-    lensX += (pointer.x - lensX) * follow;
-    lensY += (pointer.y - lensY) * follow;
-
-    // 位移幅度保持很小：只是刚好可察觉的折射，不会把字拽歪，也不产生光斑。
-    // 上限压到 4.0（之前 7）：快速移动时文字只会轻微错位，不会出现重影或拖影。
-    const scaleTarget = wantOpen ? Math.min(4, 2.3 + energy * 1.7) : 0;
-    lensScale += (scaleTarget - lensScale) * (1 - Math.pow(.78, dt / 16.7));
-    if (lensScale < .08 && !wantOpen) lensScale = 0;
-
-    if (lensOpen > .004) {
-      lens.classList.remove('is-off');
-      lens.style.transform = `translate3d(${lensX.toFixed(1)}px, ${lensY.toFixed(1)}px, 0)`;
-      // 折射副本只占七成：底下的原文仍然清晰，不会叠出明显重影。
-      lens.style.opacity = (lensOpen * .7).toFixed(3);
-      if (now - lastLensPaint > 33) {
-        lastLensPaint = now;
-        const t = now / 1000;
-        lensMap.setAttribute('scale', Math.max(.01, lensScale).toFixed(2));
-        lensFlow.setAttribute('dx', (10 * Math.sin(t * .75) + 4 * Math.sin(t * 1.9)).toFixed(1));
-        lensFlow.setAttribute('dy', (7 * Math.cos(t * .6) + 3 * Math.cos(t * 1.5)).toFixed(1));
-      }
-    } else {
-      lens.classList.add('is-off');
-    }
-
-    const settled = energy < .006 && Math.abs(sway) < .01 && lensOpen < .004 && lensScale < .05;
-    if (settled && now - lastPointerAt > 1000) {
-      lens.classList.add('is-off');
-      return;
-    }
+    const settled = energy < .006 && Math.abs(sway) < .01;
+    if (settled && now - lastPointerAt > 600) return;
     rafId = requestAnimationFrame(tick);
   };
 
@@ -586,8 +509,6 @@
       sway = Math.min(1.4, sway + speed * .5);
       wake();
     }
-    // 指针停住时如果页面在滚动，水透镜要跟着新的内容走。
-    if (pointer.seen) pickWet();
 
     lastTop = top;
     lastTime = now;

@@ -911,46 +911,9 @@ html.motion-ready .wave-c {
   100% { transform: translate3d(2%, 1%, 0) rotate(0deg) scale(1.06); }
 }
 
-/* 指针附近的局部水透镜：只让一小片背景产生轻微折射，没有颜色、光斑或模糊。
-   用 backdrop-filter 引 SVG 位移滤镜，边缘靠径向遮罩羽化，所以看不出圆形边界。
-   元素很小（280×190），不会出现整屏滤镜的掉帧问题；不要把它放大到全屏。 */
-html.motion-ready .water-lens {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 280px;
-  height: 190px;
-  margin: -95px 0 0 -140px;
-  z-index: 6;
-  pointer-events: none;
-  opacity: 0;
-  will-change: transform, opacity;
-  -webkit-backdrop-filter: url(#water-lens);
-  backdrop-filter: url(#water-lens);
-  -webkit-mask-image: radial-gradient(50% 50% at 50% 50%, #000 0%, rgba(0, 0, 0, .9) 34%, rgba(0, 0, 0, .35) 62%, transparent 78%);
-  mask-image: radial-gradient(50% 50% at 50% 50%, #000 0%, rgba(0, 0, 0, .9) 34%, rgba(0, 0, 0, .35) 62%, transparent 78%);
-}
-
-html.motion-ready .water-lens.is-off {
-  visibility: hidden;
-}
-
-/* 触屏没有悬停指针，整块透镜不参与渲染。 */
-@media (hover: none), (pointer: coarse), (max-width: 760px) {
-  html.motion-ready .water-lens { display: none; }
-}
-
-html.motion-ready .water-defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
-
-html.motion-ready .water-defs svg {
-  width: 0;
-  height: 0;
-}
+/* 原先这里有一个跟随指针的折射水透镜（backdrop-filter 引 SVG 位移滤镜）。
+   它在集成显卡上每帧都要回读画面并重算噪声滤镜，鼠标一移动整页就发涩，
+   对背单词也没有实际帮助，已整块移除；背景水光与视差保留。 */
 
 /* 首屏视差：各层以不同速度跟随滚动，并随离开逐渐淡出、微微后退 */
 html.motion-ready .intro .eyebrow {
@@ -1129,7 +1092,6 @@ html.motion-ready .reveal.is-visible .section-heading h2::after { width: 46px; }
 }
 
 /* 自适应降级：帧率撑不住时收掉最贵的装饰，布局与内容完全不变 */
-html.lite-motion .water-lens { display: none; }
 html.lite-motion .water-caustics { animation: none !important; }
 html.lite-motion body::before { animation: none !important; }
 html.lite-motion body::after { mix-blend-mode: normal; opacity: .018; }
