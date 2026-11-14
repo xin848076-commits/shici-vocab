@@ -43,6 +43,13 @@
       <span id="goal-announcement" class="sr-only" role="status" aria-live="polite"></span>
     </section>
     <div class="workspace">
+      <aside class="panel study-side" aria-labelledby="study-examples-title">
+        <section id="study-examples" class="study-examples" aria-labelledby="study-examples-title" hidden>
+          <div class="study-examples-heading"><h3 id="study-examples-title">例句</h3><span id="study-examples-word"></span></div>
+          <p id="study-examples-status" class="study-examples-status" role="status" aria-live="polite"></p>
+          <div id="study-examples-list" class="study-examples-list"></div>
+        </section>
+      </aside>
       <section class="panel study" aria-labelledby="study-title">
         <div class="section-heading"><h2 id="study-title">开始学习</h2><span id="pool-count" class="muted"></span></div>
         <div class="segmented" aria-label="学习范围"><button type="button" id="mode-all" aria-pressed="true">全部单词</button><button type="button" id="mode-difficult" aria-pressed="false">只练不会的</button></div>
@@ -54,11 +61,6 @@
         </div>
         <p id="speech-status" class="speech-status" role="status" aria-live="polite" hidden></p>
         <p id="card-record" class="card-record">先回忆，再翻面，记忆更牢固。</p>
-        <section id="study-examples" class="study-examples" aria-labelledby="study-examples-title" hidden>
-          <div class="study-examples-heading"><h3 id="study-examples-title">例句</h3><span id="study-examples-word"></span></div>
-          <p id="study-examples-status" class="study-examples-status" role="status" aria-live="polite"></p>
-          <div id="study-examples-list" class="study-examples-list"></div>
-        </section>
         <div class="grade-buttons"><button type="button" id="forgot" class="button soft-orange">还不会</button><button type="button" id="remembered" class="button soft-green">记住了 ✓</button></div>
         <button type="button" id="next" class="button primary wide">随机抽一个 →</button>
         <p class="shortcut">小提示：空格翻卡 · → 随机抽词</p>

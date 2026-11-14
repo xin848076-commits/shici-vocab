@@ -101,9 +101,13 @@
     show(entry, revealed = false) {
       if (!entry || !revealed) {
         stop(); box.hidden = true; list.replaceChildren(); status.textContent = '';
-        $('study-examples-word').textContent = ''; return;
+        $('study-examples-word').textContent = '';
+        box.closest('.workspace')?.classList.remove('with-examples');
+        return;
       }
-      box.hidden = false; render(entry);
+      box.hidden = false;
+      box.closest('.workspace')?.classList.add('with-examples');
+      render(entry);
     }
   };
 })();
