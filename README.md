@@ -87,11 +87,11 @@
 
 ## 技术实现
 
-纯 HTML + CSS + 原生 JavaScript，**没有框架、没有构建步骤、没有 npm 依赖**。双击 `index背单词.html` 就能跑。
+纯 HTML + CSS + 原生 JavaScript，**没有框架、没有构建步骤、没有 npm 依赖**。双击 `index.html` 就能跑。
 
 | 模块 | 文件 | 职责 |
 |---|---|---|
-| 页面结构 | `index背单词.html`（109 行） | 语义化结构 + ARIA 属性 |
+| 页面结构 | `index.html`（109 行） | 语义化结构 + ARIA 属性 |
 | 样式 | `vocab.css`（约 50 KB） | 布局、卡片翻转、进度环、花园动画 |
 | 主逻辑 | `vocab.js`（599 行） | 词库增删、抽词、翻卡、目标进度、导入导出 |
 | 分义释义 | `vocab-meanings.js` | 多义项展示与勾选 |
@@ -112,12 +112,12 @@
 ## 本地运行
 
 ```
-双击 index背单词.html
+双击 index.html
 ```
 
 建议用 Edge / Chrome 打开。不需要安装任何东西，不需要命令行，不需要服务器。
 
-**重要**：`index背单词.html`、`vocab.css`、9 个 `vocab*.js` 必须和 `vocab-spell/`、`vocab-meanings/` 两个文件夹保持相对位置，缺一个就会白屏。
+**重要**：`index.html`、`vocab.css`、9 个 `vocab*.js` 必须和 `vocab-spell/`、`vocab-meanings/` 两个文件夹保持相对位置，缺一个就会白屏。
 
 如果换电脑或移动文件夹：先在原位置「导出备份」，到新位置后再「导入备份」。localStorage 是按浏览器 + 文件位置隔离的，不会自动跟着走。
 
@@ -127,7 +127,7 @@
 
 ```
 git尝试/
-├── index背单词.html          主页面
+├── index.html                主页面
 ├── vocab.css                 样式
 ├── vocab.js                  主逻辑
 ├── vocab-meanings.js         分义释义
