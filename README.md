@@ -2,7 +2,7 @@
 
 一个纯前端的英语单词学习网页。中文界面，无账号、无后端、无付费服务，词库和学习记录只存在你自己的浏览器里。
 
-**在线试用**：https://wbapp-q7eab96rubuovdabyerifr.app.workbuddy.host/?sharecode=4FU5VGFCME
+**在线试用**：https://xin848076-commits.github.io/shici-vocab/
 
 > 打开时会看到 6 个示例词，不是词库缺失——**词库要从你自己收的词开始长**，这是设计如此。想快速看到完整效果，可以导入 `拾词备份-校正版-2026-11-08.json`（我自己的 125 词备份）。
 
