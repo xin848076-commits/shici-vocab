@@ -13,7 +13,13 @@
 .meaning-reference h3{font-size:13px;margin:0;font-weight:600}
 .meaning-query-status,.meaning-feedback{font-size:11px;line-height:1.7;margin:7px 0;color:var(--green);overflow-wrap:anywhere}
 .meaning-feedback:empty{display:none}
-.meaning-options{padding:0;margin:10px 0;border:0;display:flex;gap:7px;flex-wrap:wrap;max-height:220px;overflow:auto;min-width:0}
+.meaning-options{padding:0;margin:10px 0;border:0;display:flex;gap:7px;flex-wrap:wrap;max-height:360px;overflow:auto;min-width:0}
+.meaning-option input:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.sense-example-toggle{margin-top:4px}
+.sense-example-toggle>summary{display:inline-block;font-size:11px;color:var(--muted);cursor:pointer;list-style:none}
+.sense-example-toggle>summary::marker,.sense-example-toggle>summary::-webkit-details-marker{display:none}
+.sense-example-toggle>summary::before{content:'▸ '}
+.sense-example-toggle[open]>summary::before{content:'▾ '}
 .meaning-option{display:flex;align-items:baseline;gap:5px;margin:0;padding:6px 8px;background:var(--paper);border:1px solid #dce5d5;border-radius:7px;font-size:12px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
 .meaning-option:has(input:checked){background:#dfeeda;border-color:#799c6c;color:#244d30}
 .meaning-option input{width:13px;height:13px;flex-shrink:0;margin:0;padding:0;accent-color:var(--green)}
@@ -24,7 +30,7 @@
 .meaning-actions #meaning-insert{background:var(--green);border-color:var(--green);color:white}
 .meaning-reference small{font-size:10px;line-height:1.7;color:var(--muted);display:block}
 #meaning-copy-fallback{font-size:12px;margin:7px 0}
-.meaning-options{display:grid;grid-template-columns:1fr;max-height:390px;gap:10px}
+.meaning-options{display:grid;grid-template-columns:1fr;max-height:52vh;gap:10px}
 .meaning-sense-card{border:1px solid #dce5d5;border-radius:8px;background:var(--paper);padding:9px;min-width:0}
 .meaning-sense-card .meaning-option{border:0;background:transparent;padding:0;font-weight:600}
 .meaning-manual{padding:0;border-style:dashed;background:#faf9f2}

@@ -128,7 +128,7 @@
       status.textContent = '暂未查到这个单词或完整短语。按 0 自己写中文，写好按回车收下。';
       appendManualOption(); options.hidden = false; return;
     }
-    status.textContent = match.key !== normalize(query) ? `匹配到基础短语「${match.key}」。修饰词请结合句意理解；按数字键 1-9 勾选意思，按 0 自己写，回车收下。` : `「${query.trim()}」的释义参考：按 1-9 勾选想要的意思（可多选），按 0 自己写，回车收下。`;
+    status.textContent = match.key !== normalize(query) ? `匹配到基础短语「${match.key}」。按 1-9 勾选，↓ 逐条看，0 自己写，回车收下。` : `「${query.trim()}」的释义：按 1-9 勾选（可多选），↓ 逐条看，0 自己写，回车收下。`;
     entries.forEach((entry, index) => {
       const card = document.createElement('div'); card.className = 'meaning-sense-card';
       const label = document.createElement('label'); label.className = 'meaning-option';
@@ -143,7 +143,14 @@
         label.prepend(badge);
       }
       card.append(label);
-      if (globalThis.ShiciExamples) card.append(ShiciExamples.exampleBlock(ShiciExamples.get(query, entry), query));
+      // 例句默认折叠，且本地没有例句时不占空间（多数词条查不到例句）。
+      const example = globalThis.ShiciExamples?.get?.(query, entry);
+      if (example) {
+        const toggle = document.createElement('details'); toggle.className = 'sense-example-toggle';
+        const summary = document.createElement('summary'); summary.textContent = '例句';
+        toggle.append(summary, ShiciExamples.exampleBlock(example, query));
+        card.append(toggle);
+      }
       options.append(card);
     });
     appendManualOption();

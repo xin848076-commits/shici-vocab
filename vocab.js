@@ -175,17 +175,24 @@
     }
   });
   // 数字键勾选：焦点在单词框时，按 1-9 开关对应释义，收多个意思不用碰鼠标。
+  const meaningBoxes = () => [...document.querySelectorAll('#meaning-options input[type="checkbox"]')];
   function toggleMeaningByIndex(index) {
-    const boxes = [...document.querySelectorAll('#meaning-options input[type="checkbox"]')];
-    const box = boxes[index - 1];
+    const box = meaningBoxes()[index - 1];
     if (!box) return false;
     box.checked = !box.checked;
     box.dispatchEvent(new Event('change', { bubbles: true }));
-    const picked = boxes.filter(item => item.checked).map(item => item.value);
-    const feedback = $('meaning-feedback');
-    if (feedback) feedback.textContent = picked.length ? `已勾选 ${picked.length} 个意思：${picked.join('；')} —— 按回车收下` : '已取消勾选，回车就只收词典第 1 条。';
+    // 条目多时滚到视野内，否则按了数字也看不见选中了哪条。
+    box.closest('.meaning-sense-card')?.scrollIntoView({ block: 'nearest' });
     return true;
   }
+  // 勾选状态统一回显：鼠标点、空格、数字键都走这条。
+  $('meaning-options')?.addEventListener('change', event => {
+    if (!event.target.matches('input[type="checkbox"]')) return;
+    const feedback = $('meaning-feedback');
+    if (!feedback) return;
+    const picked = meaningBoxes().filter(box => box.checked).map(box => box.value);
+    feedback.textContent = picked.length ? `已勾选 ${picked.length} 个意思：${picked.join('；')} —— 按回车收下` : '已全部取消，回车就只收词典第 1 条。';
+  });
   // 数字 0 / 点「自己写中文」：焦点交给中文释义框，已勾选的意思先带过去。
   function enterManualMeaning() {
     const meaningBox = $('meaning');
@@ -202,10 +209,37 @@
   $('word').addEventListener('keydown', event => {
     if (event.isComposing || event.keyCode === 229) return;
     if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+    // ↓/↑ 进入释义列表逐条浏览，列表会自动滚到当前条目，条目再多也不用鼠标。
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      const boxes = meaningBoxes();
+      if (!boxes.length) return;
+      event.preventDefault();
+      (event.key === 'ArrowDown' ? boxes[0] : boxes[boxes.length - 1]).focus();
+      return;
+    }
     if (event.key === '0') { event.preventDefault(); enterManualMeaning(); return; }
     if (!/^[1-9]$/.test(event.key)) return;
     if (!toggleMeaningByIndex(Number(event.key))) return;
     event.preventDefault();
+  });
+  // 列表内：↑↓ 逐条移动，空格勾选（原生），回车收下，Esc 回单词框，数字键同样可勾。
+  $('meaning-options')?.addEventListener('keydown', event => {
+    if (event.isComposing || event.keyCode === 229) return;
+    const boxes = meaningBoxes();
+    const index = boxes.indexOf(document.activeElement);
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!boxes.length) return;
+      event.preventDefault();
+      const next = event.key === 'ArrowDown' ? Math.min(boxes.length - 1, Math.max(0, index) + 1) : Math.max(0, index - 1);
+      boxes[index < 0 ? 0 : next]?.focus();
+      return;
+    }
+    if (event.key === 'Escape') { event.preventDefault(); $('word').focus(); return; }
+    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+      event.preventDefault(); $('add-form').requestSubmit(); return;
+    }
+    if (event.key === '0') { event.preventDefault(); enterManualMeaning(); return; }
+    if (/^[1-9]$/.test(event.key)) { if (toggleMeaningByIndex(Number(event.key))) event.preventDefault(); }
   });
   // 中文框里按 Esc 回单词框，改词不用再摸鼠标。
   $('meaning').addEventListener('keydown', event => {

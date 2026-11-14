@@ -53,6 +53,17 @@ async function pressDigit(digit) {
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key: digit, code: `Digit${digit}`, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
   await wait(150);
 }
+async function pressArrow(key) {
+  const code = key === 'ArrowDown' ? 40 : 38;
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code: key, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+  await wait(120);
+}
+async function pressSpace() {
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32, text: ' ' });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 });
+  await wait(180);
+}
 const total = () => evaluate("Number(document.getElementById('total').textContent)");
 const toast = () => evaluate("document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent");
 
@@ -211,6 +222,41 @@ const toast = () => evaluate("document.getElementById('toast').hidden ? '' : doc
     await until(`Number(document.getElementById('total').textContent) === ${before + 5}`);
     assert.equal(await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words[0].meaning"), '自造词测试义');
     checks.push('词典查不到时，按 0 直接写中文并回车收下');
+
+    // 9) 释义很多时：↓ 逐条下移并自动滚到可见，空格勾选，回车收下
+    const deepWord = await evaluate(`(() => {
+      const used = new Set(JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words.map(w => w.word.toLowerCase()));
+      for (const w of ['light', 'spring', 'run', 'set', 'hold', 'take', 'make']) {
+        if (used.has(w)) continue;
+        if ((window.ShiciMeanings?.lookup?.(w) || []).length >= 6) return w;
+      }
+      return '';
+    })()`);
+    assert.ok(deepWord, '应能找到一个未收录且释义不少于 6 条的词');
+    await type(deepWord);
+    await until("document.querySelectorAll('#meaning-options input[type=checkbox]').length >= 6");
+    assert.equal(await evaluate("document.querySelectorAll('#meaning-options .example-missing').length"), 0, '本地没有例句时不应显示占位文案');
+    const deepSenses = await evaluate("[...document.querySelectorAll('#meaning-options input[type=checkbox]')].map(b => b.value)");
+    // 把列表压矮，确保能验证「自动滚动」而不是碰巧都看得见
+    await evaluate("document.getElementById('meaning-options').style.maxHeight = '120px'");
+    await pressArrow('ArrowDown');
+    assert.equal(await evaluate("document.activeElement.type"), 'checkbox', '↓ 应把焦点移进释义列表');
+    for (let i = 0; i < 5; i++) await pressArrow('ArrowDown');
+    assert.equal(await evaluate("document.activeElement.value"), deepSenses[5], '连按 ↓ 应逐条下移到第 6 条');
+    assert.ok(await evaluate("document.getElementById('meaning-options').scrollTop > 0"), '列表应自动滚动到当前条目');
+    assert.ok(await evaluate(`(() => {
+      const el = document.activeElement.closest('.meaning-sense-card');
+      const wrap = document.getElementById('meaning-options');
+      const a = el.getBoundingClientRect(), b = wrap.getBoundingClientRect();
+      return a.top >= b.top - 1 && a.bottom <= b.bottom + 1;
+    })()`), '当前条目应完整落在可见范围内');
+    await pressSpace();
+    assert.equal(await evaluate("document.activeElement.checked"), true, '空格应勾选当前条目');
+    await evaluate("document.getElementById('meaning-options').style.maxHeight = ''");
+    await pressEnter();
+    await until(`Number(document.getElementById('total').textContent) === ${before + 6}`);
+    assert.equal(await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words[0].meaning"), deepSenses[5]);
+    checks.push('释义多时：↓ 逐条下移并自动滚到可见，空格勾选、回车收下');
 
     assert.equal(events.filter(e => e.method === 'Runtime.exceptionThrown').length, 0, '页面不应抛异常');
     checks.push('全程无 JS 异常');
