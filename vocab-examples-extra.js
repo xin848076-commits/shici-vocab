@@ -89,7 +89,7 @@ window.SHICI_EXAMPLE_EXTENSIONS = {
   'increase': [['v. 增加|增长', 'The population has increased over the past decade.', '过去十年人口有所增长。'],['n. 增加|增长', 'There was an increase in ticket sales.', '门票销量有所增加。']],
   'influence': [['n. 影响|影响力', 'Her teacher had a strong influence on her career choice.', '老师对她的职业选择产生了很大影响。'],['v. 影响', 'Weather can influence our travel plans.', '天气会影响我们的旅行计划。']],
   'innovation': [['n. 创新|革新', 'The award recognises innovation in public transport.', '这个奖项表彰公共交通领域的创新。']],
-  'involve': [['v. 包含|涉及', 'The job involves working with young children.', '这份工作涉及与幼儿相处。'],['v. 使参与', 'We want to involve local people in the project.', '我们希望让当地居民参与这个项目。']],
+  'involve': [['v. 包含|涉及', 'The job involves working with young children.', '这份工作涉及与幼儿相处。'],['v. 使参与', 'We want to involve local people in the project.', '我们希望让当地居民参与这个项目。'],['vt. 包括', 'The course involves a great deal of reading.', '这门课程包括大量阅读。'],['vt. 使陷于', 'The new rules could involve small firms in extra costs.', '新规定可能使小公司陷于额外成本。'],['vt. 潜心于', 'He involves himself in every detail of the project.', '他潜心于这个项目的每一个细节。'],['需要', 'Learning a language involves a lot of patience.', '学一门语言需要很大的耐心。']],
   'issue': [['n. 问题|议题', 'The meeting will address several important issues.', '会议将讨论几个重要问题。'],['n. 一期|期号', 'I read the article in the latest issue of the magazine.', '我在最新一期杂志上读到了这篇文章。'],['v. 发布|发行', 'The school issued a statement about the change.', '学校就这一变化发布了一份声明。']],
   'knowledge': [['n. 知识|学问', 'Travel can broaden your knowledge of the world.', '旅行可以拓宽你对世界的认识。']],
   'maintain': [['v. 维持|保持', 'We need to maintain a healthy balance between work and rest.', '我们需要保持工作与休息之间的健康平衡。'],['v. 维护|保养', 'The machines are maintained regularly.', '这些机器定期得到维护。'],['v. 坚称|主张', 'She maintained that the decision was unfair.', '她坚持认为这个决定不公平。']],
@@ -248,5 +248,30 @@ Object.assign(window.SHICI_EXAMPLE_EXTENSIONS, {
   'a great deal of': [['大量的（接不可数名词）|大量的', 'The project requires a great deal of patience.', '这个项目需要很大的耐心。']],
   'more and more': [['越来越多', 'More and more people are choosing to cycle to work.', '越来越多的人选择骑车上班。']],
   'sooner or later': [['迟早', 'Sooner or later, we will need to replace this machine.', '我们迟早需要更换这台机器。']],
-  'last but not least': [['最后但同样重要的是', 'Last but not least, I would like to thank our volunteers.', '最后但同样重要的是，我想感谢我们的志愿者。']]
+  'last but not least': [['最后但同样重要的是', 'Last but not least, I would like to thank our volunteers.', '最后但同样重要的是，我想感谢我们的志愿者。']],
+  'revolve': [
+    ['v. (使)旋转', 'The earth revolves around the sun once a year.', '地球每年绕太阳旋转一圈。'],
+    ['v. 反复考虑', 'He kept revolving the problem in his mind all night.', '他一整夜都在脑中反复考虑这个问题。'],
+    ['v. 循环出现', 'The seasons revolve in an endless cycle.', '四季循环出现，永无止境。']
+  ],
+  'evolve': [
+    ['vi. 进展', 'The talks evolved slowly over several months.', '谈判在几个月里缓慢进展。'],
+    ['vi. 展开', 'The story evolves gradually through the novel.', '故事在这部小说中逐步展开。'],
+    ['vt. 使发展', 'The team evolved a simple idea into a full product.', '团队把一个简单的想法发展成了完整的产品。']
+  ],
+  'tend to do sth.': [['往往会...', 'Prices tend to rise just before the holiday.', '节前物价往往会上涨。']],
+  'inform sb. of': [['通知某人某事', 'Please inform us of any change in your address.', '地址如有变动请通知我们。']],
+  'retail store': [['[经] 零售商店', 'She bought the coat at a small retail store downtown.', '她是在市中心一家小零售商店买的这件外套。']],
+  'device': [
+    ['n. 设计', 'The old coin carries a lion device on one side.', '这枚古币的一面有一个狮子图案设计。'],
+    ['n. 发明物', 'The telephone was a remarkable device for its time.', '电话在当时是一项了不起的发明物。'],
+    ['n. 设备', 'This device measures the temperature of the water.', '这个设备用来测量水温。']
+  ],
+  'devise': [
+    ['vt. 设计', 'Engineers devised a new way to cool the engine.', '工程师设计出一种新的发动机冷却方式。'],
+    ['vt. 发明', 'She devised a simple tool for opening jars.', '她发明了一个开罐子的简单工具。'],
+    ['vt. 遗赠给', 'He devised his house to his eldest daughter.', '他把房子遗赠给了大女儿。'],
+    ['n. 遗赠', 'The land came to her as a devise from her uncle.', '这块土地是叔叔遗赠给她的。']
+  ],
+  '（观点）... for the following reasons': [['……，理由如下', 'I believe the plan should be delayed for the following reasons.', '我认为这个计划应当推迟，理由如下。']]
 });

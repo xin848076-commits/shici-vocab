@@ -15,7 +15,12 @@ const data = {
   ...(loadGlobal('vocab-examples-data.js').SHICI_EXAMPLE_DATA || {})
 };
 
-const wordKey = word => String(word).normalize('NFKC').trim().toLowerCase().replace(/[‐‑‒–—−]/g, '-').replace(/[‘’]/g, "'").replace(/[\u200b\uFEFF]/g, '').replace(/\s+/g, ' ').replace(/\s*(?:\.{2,}|…+)\s*$/, '').trim();
+// 与页面 vocab-examples.js 的 wordKey 保持一致：特殊短语归一到通用形式。
+const wordKey = word => {
+  let key = String(word).normalize('NFKC').trim().toLowerCase().replace(/[‐‑‒–—−]/g, '-').replace(/[‘’]/g, "'").replace(/[\u200b\uFEFF]/g, '').replace(/\s+/g, ' ').replace(/\s*(?:\.{2,}|…+)\s*$/, '').trim();
+  if (/^[（(]观点[）)]\s*\.{3,}\s*for the following reasons$/.test(key)) key = 'for the following reasons';
+  return key;
+};
 function senseKey(sense) {
   const match = sense.trim().match(/^([a-z]+\.)\s*/i);
   let pos = match ? match[1].toLowerCase().replace('.', '') : '';
