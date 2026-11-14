@@ -1,0 +1,581 @@
+{
+  "version": 1,
+  "words": [
+    {
+      "id": "e8df34c8-8429-471f-8616-2475da48dc59",
+      "word": "systematically",
+      "meaning": "adv. 系统地；有条理地",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "fcca5e2d-7dad-4bdf-9d51-13bd15be55fb",
+      "word": "individual",
+      "meaning": "个人的；个人",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "776c0d56-1f47-4487-93b6-f95a230e3896",
+      "word": "beneficial",
+      "meaning": "有益的，有利的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "a1e0452f-5dbf-4446-ac74-2252dd2e59d0",
+      "word": "average",
+      "meaning": "平均的；平均水平",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "6ccf2482-faec-4cf9-846a-4fe6c37f1199",
+      "word": "frugally",
+      "meaning": "节省地",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "5e9c9c5c-5c2f-488e-9874-d2484298ceb8",
+      "word": "brand-name products",
+      "meaning": "名牌商品",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "28678b87-203c-43dc-80ac-d8a5274fcdec",
+      "word": "be obsessed with",
+      "meaning": "痴迷于",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "39e639d1-1169-42f8-8d95-22a3e9b86a4d",
+      "word": "be addicted to",
+      "meaning": "沉迷于...",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "23f1d2b6-100a-45e4-b65c-b90b1323f792",
+      "word": "a distorted concept of ...",
+      "meaning": "对……的错误观念；对……的歪曲认识",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "537b3e64-0edc-470d-8a93-e533112c156c",
+      "word": "as a matter of fact",
+      "meaning": "事实上",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:05:42.560Z"
+    },
+    {
+      "id": "64de87d7-a1e3-4d82-b897-0f22945563e5",
+      "word": "in practice",
+      "meaning": "实际上",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "aa25ca86-5263-4921-96e6-d5dea28ba0f7",
+      "word": "in effect",
+      "meaning": "实际上；事实上；（规定、法律等）生效中",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "0005b0f2-0476-48fd-a14d-4e736738b4bc",
+      "word": "in essence",
+      "meaning": "本质上；实质上",
+      "status": "difficult",
+      "reviews": 2,
+      "lastReviewed": "2026-11-02T13:06:29.624Z"
+    },
+    {
+      "id": "a5c993b0-70c6-46cd-bde2-fed169a134cb",
+      "word": "consumer goods",
+      "meaning": "消费品",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:11.490Z"
+    },
+    {
+      "id": "631db4eb-557f-4811-8e53-ced4246b684a",
+      "word": "commodity",
+      "meaning": "商品",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "38dd04e6-f815-40fe-9402-366e1401bf0b",
+      "word": "vanity",
+      "meaning": "虚荣心",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:06.225Z"
+    },
+    {
+      "id": "7f3c08ff-effd-406a-a906-a77e157958b3",
+      "word": "abruptly",
+      "meaning": "突然地\n粗暴地",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "25b050ce-4f72-4e15-9a51-28d7895b2265",
+      "word": "corrupt",
+      "meaning": "贪污的，腐败的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "8fb4f5f6-f744-424e-8d87-e013c9e54921",
+      "word": "disrupt",
+      "meaning": "扰乱，使中断，瓦解",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "d8bb201c-2590-4646-a4d0-6c3ab89ee044",
+      "word": "erupt",
+      "meaning": "爆发，喷出",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "587638cf-f1c1-4821-a4bb-a90705594ecd",
+      "word": "interrupt",
+      "meaning": "打断",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "6589007d-3a1e-4559-a20f-fc685463b4e1",
+      "word": "economize",
+      "meaning": "节俭",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:42.332Z"
+    },
+    {
+      "id": "73b8d0b4-4c51-4b04-84be-e17a740b29bd",
+      "word": "economical",
+      "meaning": "adj. 节约的；经济实惠的；省钱的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "c7374782-91e1-4ace-9380-5e184228acf1",
+      "word": "economic",
+      "meaning": "经济上的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "88dd6a92-18b7-4147-870e-99867b8c521b",
+      "word": "academic",
+      "meaning": "学术上的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "f8a2f194-0e9b-45b9-b9af-953c1f07458a",
+      "word": "academy",
+      "meaning": "学院",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "4177ae23-908f-423e-9452-c00f00aab929",
+      "word": "play a crucial role in",
+      "meaning": "起关键作用",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:21.907Z"
+    },
+    {
+      "id": "2c7d3478-ea52-494f-9f60-f24787b5c9f8",
+      "word": "faulty",
+      "meaning": "有错误的；有缺陷的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "61b22b36-bda6-4dbf-962a-f357cb01ad9c",
+      "word": "competence",
+      "meaning": "能力",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "7322b80e-5f14-42a4-b942-13fc6c8acdbf",
+      "word": "competent",
+      "meaning": "有能力的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "e81b615c-66f7-4b6d-8e3f-11e4e7ac1256",
+      "word": "capability",
+      "meaning": "n. 能力；才能；（机器等的）性能",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "ac5d91af-6134-43f1-80f2-45adc02e5522",
+      "word": "talent",
+      "meaning": "天资；才能",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "cffd7986-cb6e-47db-a1f9-ae757ce6079b",
+      "word": "aptitude",
+      "meaning": "天资，才能",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "3223b164-ee8a-4ac7-b772-eb306e3a6770",
+      "word": "attitude is everything",
+      "meaning": "心态决定一切",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:33.644Z"
+    },
+    {
+      "id": "4e2fe9cc-d8a5-4e19-a926-b63d96cc6e75",
+      "word": "multimedia",
+      "meaning": "多媒体",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "c06154eb-4132-4c56-bb41-ab1c4bdd5e95",
+      "word": "a case in point is ...",
+      "meaning": "一个典型的例子是...",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:15.614Z"
+    },
+    {
+      "id": "8bfec856-6fb3-4178-9e58-a16d344378b9",
+      "word": "for instance",
+      "meaning": "例如",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "8e3381f7-a6f1-4bfc-a242-904a6f3f93e4",
+      "word": "as is vividly depicted in ...",
+      "meaning": "正如……中生动描绘的那样",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "f5c167ba-a7bb-4eef-95fa-d4a4eef39b24",
+      "word": "depict",
+      "meaning": "描绘；描述；刻画",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "abdc4bc0-43f1-4d84-bf46-ab8cab0ce6f8",
+      "word": "portray",
+      "meaning": "描绘；扮演",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "6188bb19-e3ca-48f7-9b7d-1b40402dd8a8",
+      "word": "（观点）... for the following reasons",
+      "meaning": "……，理由如下",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "706e6739-dae7-46e7-b9ff-3decccb6ca45",
+      "word": "currently",
+      "meaning": "当前",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:05:56.760Z"
+    },
+    {
+      "id": "1665191c-f0f7-4f71-9eef-3e29f98bbb86",
+      "word": "a hot-button issue",
+      "meaning": "热门/敏感话题",
+      "status": "known",
+      "reviews": 2,
+      "lastReviewed": "2026-11-02T13:06:35.923Z"
+    },
+    {
+      "id": "354f10d9-4a00-46d3-86d1-ff44d3664bf9",
+      "word": "outcome",
+      "meaning": "结果",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "db2a8e04-55c3-4c86-803d-24bf628a6414",
+      "word": "optimal",
+      "meaning": "最佳的=best",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "3a04024f-1680-4875-99c1-a615c6899c66",
+      "word": "in-person",
+      "meaning": "adj. 亲自进行的；面对面的（如 an in-person meeting）",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "74793e4c-8895-47df-9238-8319476a2b6a",
+      "word": "essential",
+      "meaning": "必不可少的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "2f88c78e-7ff2-496b-8c56-adf7fc6b6963",
+      "word": "chart",
+      "meaning": "图表",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "12388a72-2a95-43db-b246-465677a1380c",
+      "word": "pandemic",
+      "meaning": "全球性流行病",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "7e277f95-4f32-4e65-b77b-223180f26f3f",
+      "word": "be attributed to",
+      "meaning": "归因于",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "9c687e59-b4c2-4cf3-b46b-d322ee9667bd",
+      "word": "distribute",
+      "meaning": "分发",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "d76b9ea8-9923-4ca8-87c2-4519cfbc090b",
+      "word": "contribute to",
+      "meaning": "有助于/对...做贡献",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "703d0a5d-538a-42d2-b4fb-9ddd4f51072f",
+      "word": "rely on",
+      "meaning": "依赖",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-01T06:25:52.706Z"
+    },
+    {
+      "id": "5e51b34e-fc85-46fe-a9bc-30a5eda8ee11",
+      "word": "conceal",
+      "meaning": "隐藏",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "d3ad350a-8f52-409c-a375-c117d900cf96",
+      "word": "reveal",
+      "meaning": "揭示",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:03.639Z"
+    },
+    {
+      "id": "9e930070-2c94-4ca7-816b-6b33fecaec5b",
+      "word": "significant",
+      "meaning": "重大的",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:05:45.894Z"
+    },
+    {
+      "id": "4c54eaa2-e44f-4815-b913-73adfff72292",
+      "word": "illustrate",
+      "meaning": "v. 说明；阐明；（用图表、例子）解释；给……加插图",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "372ce49d-c010-483d-ba55-9ee6ec7e545b",
+      "word": "emergency",
+      "meaning": "n. 紧急情况；突发事件；（医疗语境）急症；adj. 紧急的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "5a926a00-fe04-4055-a4d5-17f12b183769",
+      "word": "inpatient",
+      "meaning": "n. 住院病人；adj. 住院的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "65d5e389-f628-403c-8167-4f954d86d991",
+      "word": "outpatient",
+      "meaning": "n. 门诊病人；adj. 门诊的",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:45.478Z"
+    },
+    {
+      "id": "72ea2776-3e9b-44a0-b19a-e2d7a785c62f",
+      "word": "endeavor",
+      "meaning": "v. 努力；尽力；力图（常接 to do）；n. 努力；尝试（英式拼写 endeavour）",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "55f5070c-fabc-473b-b2c5-619b8085831f",
+      "word": "usage",
+      "meaning": "n. 使用；用法；使用量；（语言的）惯用法",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "4bd6394b-010e-460e-aaf4-a28ac1215244",
+      "word": "strive",
+      "meaning": "奋斗",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:05:52.823Z"
+    },
+    {
+      "id": "15beb0af-ef25-4459-8262-b6cfdadf4381",
+      "word": "embrace life",
+      "meaning": "拥抱生活",
+      "status": "known",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:06:01.440Z"
+    },
+    {
+      "id": "093351b8-437c-4027-bdae-402f0554ea1f",
+      "word": "endure",
+      "meaning": "忍受",
+      "status": "difficult",
+      "reviews": 1,
+      "lastReviewed": "2026-11-02T13:05:59.152Z"
+    },
+    {
+      "id": "35f325bd-c793-4744-9b3b-cdb226ed9f53",
+      "word": "reverse",
+      "meaning": "v. 颠倒；逆转；撤销；倒车；adj. 相反的；n. 相反情况；背面",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "28251870-6439-4292-bef1-3acce52c312f",
+      "word": "convert",
+      "meaning": "v.转变；转换\nn.改变信仰者",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "41ee5a3e-e5eb-4d61-878f-7512cd71820b",
+      "word": "diverse",
+      "meaning": "多种多样的：不同的",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    },
+    {
+      "id": "c9ab37c0-eb27-45bb-810e-51ff1bf3bd1a",
+      "word": "wonder",
+      "meaning": "惊奇；奇迹；想知道",
+      "status": "known",
+      "reviews": 3,
+      "lastReviewed": "2026-11-01T03:19:51.272Z"
+    },
+    {
+      "id": "0581afcc-02e0-4bbb-b923-a4af147c28d1",
+      "word": "journey",
+      "meaning": "旅行；旅程",
+      "status": "known",
+      "reviews": 3,
+      "lastReviewed": "2026-11-01T03:18:29.940Z"
+    },
+    {
+      "id": "65ad6ec6-e432-46bb-b40e-09cc65c6eac8",
+      "word": "persist",
+      "meaning": "坚持；持续",
+      "status": "new",
+      "reviews": 0,
+      "lastReviewed": null
+    }
+  ],
+  "daily": {
+    "2026-11-01": 12,
+    "2026-11-02": 18
+  },
+  "currentId": "e8df34c8-8429-471f-8616-2475da48dc59",
+  "mode": "all",
+  "app": "shici",
+  "exportedAt": "2026-11-08T08:19:58.918Z"
+}

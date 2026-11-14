@@ -1,0 +1,45 @@
+module.exports = async ({ send, evaluate, until, type, fs, path, out, assert, events }) => {
+  const source = path.join(out, 'current-vocabulary.json');
+  const bytes = fs.readFileSync(source), original = JSON.parse(bytes);
+  assert.equal(original.words.length, 125);
+  await evaluate(`localStorage.setItem('shici.vocabulary.v1', ${JSON.stringify(JSON.stringify(original))})`);
+  await send('Page.reload'); await until("document.getElementById('total')?.textContent==='125'");
+  assert.deepEqual(await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1'))"), original);
+  const coverage = await evaluate(`(() => {
+    const words=JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words;
+    return words.map(word=>{
+      const reference=ShiciMeanings.lookup(word.word);
+      const saved=ShiciExamples.renderSaved(word);
+      ShiciStudyExamples.show(word);
+      return {word:word.word,referenceSenses:reference.length,referenceMissing:reference.filter(s=>!ShiciExamples.get(word.word,s)),savedMissing:[...saved.querySelectorAll('.sense-group')].filter(g=>g.querySelector('.example-missing')).map(g=>g.querySelector('.sense-title').textContent),studyExamples:document.querySelectorAll('#study-examples .example-en').length};
+    });
+  })()`);
+  fs.writeFileSync(path.join(out, 'coverage.json'), JSON.stringify(coverage, null, 2));
+  const missing = coverage.filter(item=>!item.referenceSenses || item.referenceMissing.length || item.savedMissing.length || !item.studyExamples);
+  assert.deepEqual(missing, [], 'Every local word and saved meaning needs an example');
+  assert.deepEqual(await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1'))"), original);
+  await evaluate("[...document.querySelectorAll('.word-row')].find(r=>r.querySelector('strong').textContent==='forge').querySelector('.tag').click()");
+  assert.equal(await evaluate("document.getElementById('card-text').textContent"), 'forge');
+  assert.equal(await evaluate("document.querySelectorAll('#study-examples .example-en').length"), 3);
+  assert.ok(await evaluate("document.getElementById('study-examples').textContent.includes('signature')"));
+  assert.ok(await evaluate("document.getElementById('study-examples').textContent.includes('relationship')"));
+  const position=await evaluate("(() => {const c=document.getElementById('flashcard').getBoundingClientRect(),e=document.getElementById('study-examples').getBoundingClientRect(),b=document.querySelector('.grade-buttons').getBoundingClientRect();return {top:e.top>c.bottom,bottom:b.top>e.bottom};})()");
+  assert.ok(position.top && position.bottom);
+  await evaluate("document.getElementById('study-examples').scrollIntoView({block:'center'})");
+  const desktop=await send('Page.captureScreenshot',{format:'png'});
+  fs.writeFileSync(path.join(out,'125-examples-desktop.png'),Buffer.from(desktop.data,'base64'));
+  await type('sustainable');
+  assert.ok(await evaluate("document.getElementById('study-examples').textContent.includes('sustainable transport')"));
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:1000,deviceScaleFactor:1,mobile:true});
+  await evaluate("document.getElementById('study-examples').scrollIntoView({block:'center'})");
+  assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth"),true);
+  const mobile=await send('Page.captureScreenshot',{format:'png'});
+  fs.writeFileSync(path.join(out,'125-examples-mobile.png'),Buffer.from(mobile.data,'base64'));
+  const state=await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1'))");
+  assert.deepEqual(state.words,original.words); assert.deepEqual(state.daily,original.daily);
+  assert.deepEqual(fs.readFileSync(source),bytes);
+  assert.equal(events.filter(e=>e.method==='Network.requestWillBeSent' && /^https?:/.test(e.params.request.url)).length,0);
+  assert.equal(events.filter(e=>e.method==='Runtime.exceptionThrown').length,0);
+  const result={passed:true,words:125,newWords:33,referenceSenseExamples:coverage.reduce((sum,item)=>sum+item.referenceSenses,0),missingSavedSenses:0,checks:['125-word compatibility','all reference and saved senses covered locally','every word automatically renders study examples','no network requests','forge multiple meanings and phrase','input preview for sustainable','card/examples/grading-button order and gaps','390px mobile layout','words and learning stats unchanged','no JavaScript errors'],screenshots:['125-examples-desktop.png','125-examples-mobile.png']};
+  fs.writeFileSync(path.join(out,'verification.json'),JSON.stringify(result,null,2)); console.log(JSON.stringify(result,null,2));
+};

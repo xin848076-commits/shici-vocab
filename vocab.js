@@ -1,0 +1,624 @@
+/* 拾词：普通脚本，不使用模块、网络或第三方依赖，支持 file:// 双击打开。 */
+(() => {
+  'use strict';
+  const KEY = 'shici.vocabulary.v1';
+  const $ = id => document.getElementById(id);
+  const dayKey = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+  const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const seed = [['serendipity', '不期而遇的美好；意外发现珍宝的运气'], ['wonder', '惊奇；奇迹；想知道'], ['gentle', '温柔的；轻柔的'], ['bloom', '开花；绽放'], ['journey', '旅行；旅程'], ['persist', '坚持；持续']];
+  let state = { version: 1, words: seed.map(([word, meaning]) => ({ id: uid(), word, meaning, status: 'new', reviews: 0, lastReviewed: null })), daily: {}, currentId: null, mode: 'all' };
+  let flipped = false, pendingImport = null, toastTimer, loadFailed = false, lastRenderedDay;
+
+  // 对本地数据和导入文件采用同一套严格检查，避免坏备份覆盖词库。
+  function validate(data) {
+    if (!data || data.version !== 1 || !Array.isArray(data.words) || data.words.length > 20000 || !data.daily || typeof data.daily !== 'object' || Array.isArray(data.daily)) throw new Error('备份格式不正确，请选择拾词导出的 JSON 文件。');
+    const ids = new Set(), names = new Set();
+    const words = data.words.map(item => {
+      if (!item || typeof item.id !== 'string' || !item.id || item.id.length > 150 || typeof item.word !== 'string' || !item.word.trim() || item.word.length > 100 || typeof item.meaning !== 'string' || !item.meaning.trim() || item.meaning.length > 500 || !['new', 'difficult', 'known'].includes(item.status) || !Number.isSafeInteger(item.reviews) || item.reviews < 0 || !(item.lastReviewed === null || (typeof item.lastReviewed === 'string' && Number.isFinite(Date.parse(item.lastReviewed))))) throw new Error('备份中的单词或学习记录不完整，未导入任何数据。');
+      const name = item.word.trim().toLowerCase();
+      if (ids.has(item.id) || names.has(name)) throw new Error('备份有重复单词或编号，未导入任何数据。');
+      ids.add(item.id); names.add(name);
+      const result = { id: item.id, word: item.word.trim(), meaning: item.meaning.trim(), status: item.status, reviews: item.reviews, lastReviewed: item.lastReviewed };
+      if (item.examples !== undefined) {
+        if (!Array.isArray(item.examples) || item.examples.length > 40) throw new Error('备份中的例句格式不正确，未导入任何数据。');
+        const senses = new Set();
+        result.examples = item.examples.map(example => {
+          if (!example || !['sense', 'en', 'zh'].every(key => typeof example[key] === 'string' && example[key].trim()) || example.sense.length > 500 || example.en.length > 1000 || example.zh.length > 1000 || senses.has(example.sense.trim())) throw new Error('备份中的例句不完整或重复，未导入任何数据。');
+          senses.add(example.sense.trim());
+          return { sense: example.sense.trim(), en: example.en.trim(), zh: example.zh.trim() };
+        });
+      }
+      result.garden = ShiciMotivation.validateGarden(item.garden, result);
+      return result;
+    });
+    const daily = {};
+    for (const [date, count] of Object.entries(data.daily)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isSafeInteger(count) || count < 0) throw new Error('备份中的每日记录格式不正确。');
+      daily[date] = count;
+    }
+    return { version: 1, words, daily, currentId: ids.has(data.currentId) ? data.currentId : null, mode: data.mode === 'difficult' ? 'difficult' : 'all', motivation: ShiciMotivation.validate(data.motivation, words) };
+  }
+  function notify(message) {
+    clearTimeout(toastTimer); $('toast').textContent = message; $('toast').hidden = false;
+    toastTimer = setTimeout(() => { $('toast').hidden = true; }, 4500);
+  }
+  function warning(message) { $('storage-warning').hidden = false; $('storage-warning').textContent = message; }
+  function save() {
+    if (loadFailed) { notify('原本地记录无法读取。请先导出当前内容，或导入有效备份恢复。'); return false; }
+    try { localStorage.setItem(KEY, JSON.stringify(state)); $('storage-warning').hidden = true; return true; }
+    catch { warning('浏览器暂时无法保存数据（可能空间已满或禁止存储）。请导出备份；本次未保存的修改不会生效。'); return false; }
+  }
+  function change(mutator) {
+    const previous = JSON.stringify(state);
+    mutator();
+    if (!save()) { state = JSON.parse(previous); render(); return false; }
+    render(); return true;
+  }
+  function pool() { return state.words.filter(w => state.mode === 'all' || w.status === 'difficult'); }
+  function current() { return pool().find(w => w.id === state.currentId); }
+  function choose(exclude) {
+    const available = pool();
+    const others = available.filter(w => w.id !== exclude);
+    const candidates = others.length ? others : available;
+    state.currentId = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)].id : null;
+    flipped = false;
+  }
+  function draw() { change(() => choose(state.currentId)); }
+  function flip() { if (current()) { flipped = !flipped; renderCard(); } }
+  function renderCard() {
+    const word = current();
+    const empty = !word;
+    globalThis.ShiciSpeech?.setWord(word?.word || '');
+    $('flashcard').disabled = empty;
+    $('flashcard').setAttribute('aria-pressed', String(flipped));
+    $('flashcard').setAttribute('aria-label', flipped ? '翻回英文单词' : '翻开卡片查看中文释义');
+    $('card-label').textContent = empty ? 'A FRESH START / 新的开始' : (flipped ? 'MEANING / 中文释义' : 'ENGLISH / 英文');
+    $('card-text').textContent = empty ? (state.mode === 'difficult' ? '暂时没有不会的词' : '你的词库，等你开始') : (flipped ? word.meaning : word.word);
+    $('card-hint').textContent = empty ? (state.mode === 'difficult' ? '继续学习，在需要时标记「还不会」' : '添加一个单词，开启积累') : (flipped ? '对照答案，诚实地给自己一个反馈' : '先想一想，它的中文意思是什么？');
+    $('card-record').textContent = word ? `已复习 ${word.reviews} 次 · ${word.status === 'known' ? '已掌握' : word.status === 'difficult' ? '还需巩固' : '新单词'}${word.lastReviewed ? ` · 上次 ${new Date(word.lastReviewed).toLocaleDateString('zh-CN')}` : ''}` : '每天一点点，慢慢积累。';
+    $('forgot').disabled = empty || !flipped;
+    $('remembered').disabled = empty || !flipped;
+    $('next').disabled = !pool().length;
+    $('forgot').title = $('remembered').title = flipped ? '记录一次复习' : '先翻卡查看释义，再记录学习结果';
+    globalThis.ShiciStudyExamples?.show(word, flipped);
+  }
+  function renderList() {
+    const query = $('search').value.trim().toLowerCase();
+    const words = state.words.filter(w => `${w.word}\n${w.meaning}`.toLowerCase().includes(query));
+    const fragment = document.createDocumentFragment();
+    if (!words.length) {
+      const empty = document.createElement('p'); empty.className = 'empty';
+      empty.textContent = query ? '没有找到这个词，试试其他关键词。' : '还没有单词。添加你的第一个单词吧。'; fragment.append(empty);
+    }
+    for (const word of words) {
+      const row = document.createElement('div'); row.className = 'word-row';
+      const info = document.createElement('div'); info.className = 'word-info';
+      const title = document.createElement('strong'); title.textContent = word.word;
+      const meaning = globalThis.ShiciExamples ? ShiciExamples.renderSaved(word) : document.createElement('p');
+      if (!globalThis.ShiciExamples) meaning.textContent = word.meaning;
+      const record = document.createElement('small'); record.textContent = `复习 ${word.reviews} 次`;
+      info.append(title, meaning, record);
+      const tag = document.createElement('button'); tag.type = 'button'; tag.className = `tag ${word.status}`;
+      tag.textContent = { new: '新单词', difficult: '还不会', known: '已掌握' }[word.status];
+      tag.setAttribute('aria-label', `学习 ${word.word}，当前状态：${tag.textContent}`);
+      tag.addEventListener('click', () => { if (change(() => { state.mode = 'all'; state.currentId = word.id; flipped = false; })) { $('flashcard').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('flashcard').focus({ preventScroll: true }); } });
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'delete'; remove.textContent = '删除'; remove.setAttribute('aria-label', `删除 ${word.word}`);
+      remove.addEventListener('click', () => {
+        if (!confirm(`确定删除「${word.word}」及它的复习记录？建议先导出备份。`)) return;
+        if (change(() => { state.words = state.words.filter(w => w.id !== word.id); if (!current()) choose(); })) notify('单词已删除，历史每日复习次数仍保留。');
+      });
+      row.append(info, tag, remove); fragment.append(row);
+    }
+    $('word-list').replaceChildren(fragment);
+    $('list-count').textContent = query ? `找到 ${words.length} 个单词 · 共 ${state.words.length} 个` : `共 ${words.length} 个单词 · 点击状态标签可学习这个词`;
+  }
+  function render() {
+    lastRenderedDay = dayKey();
+    $('total').textContent = state.words.length;
+    $('difficult-total').textContent = state.words.filter(w => w.status === 'difficult').length;
+    $('known-total').textContent = state.words.filter(w => w.status === 'known').length;
+    $('today-total').textContent = state.daily[dayKey()] || 0;
+    $('pool-count').textContent = `${pool().length} 个可学习`;
+    $('mode-all').setAttribute('aria-pressed', String(state.mode === 'all'));
+    $('mode-difficult').setAttribute('aria-pressed', String(state.mode === 'difficult'));
+    renderCard(); renderList();
+    ShiciMotivation.render(state);
+  }
+  function grade(status) {
+    const word = current();
+    if (!word || !flipped) return;
+    const reviewTime = new Date(), reviewDay = ShiciMotivation.today(reviewTime);
+    let completed = false;
+    if (change(() => {
+      completed = ShiciMotivation.record(state, word, status, reviewDay);
+      word.status = status; word.reviews++; word.lastReviewed = reviewTime.toISOString();
+      state.daily[reviewDay] = (state.daily[reviewDay] || 0) + 1;
+      choose(word.id);
+    })) {
+      if (completed) ShiciMotivation.celebrate();
+      notify(completed ? '今天的小目标完成啦！你的努力正在生根。' : status === 'known' ? '已记录「记住了」，继续下一个！' : '已加入不会的单词，花园里会提醒你来浇水。');
+    }
+  }
+  $('add-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const word = $('word').value.trim(), meaning = $('meaning').value.trim();
+    if (!word || !meaning) { notify('请把英文和中文释义都填上。'); return; }
+    if (!/[a-z]/i.test(word)) { notify('英文单词或短语中至少需要一个英文字母。'); $('word').focus(); return; }
+    if (state.words.some(w => w.word.toLowerCase() === word.toLowerCase())) { notify('这个单词已经在词库中了，请勿重复添加。'); return; }
+    if (state.words.length >= 20000) { notify('词库已达到 20000 个单词上限，请先导出备份整理。'); return; }
+    if (change(() => { const entry = { id: uid(), word, meaning, status: 'new', reviews: 0, lastReviewed: null, garden: { stage: 0, lastGrowthDay: null } }; const examples = globalThis.ShiciExamples?.draftExamples(word, meaning); if (examples?.length) entry.examples = examples; state.words.unshift(entry); state.currentId = entry.id; state.mode = 'all'; flipped = false; })) { $('add-form').reset(); $('word').focus(); notify(`已收下「${word}」，也种下了一颗小种子。`); }
+  });
+  document.addEventListener('shici-goal-change', event => {
+    const goal = event.detail?.goal;
+    if (![5, 10, 20].includes(goal) || state.motivation.goal === goal) return;
+    let completed = false;
+    if (change(() => { state.motivation.goal = goal; completed = ShiciMotivation.complete(state); })) {
+      if (completed) ShiciMotivation.celebrate();
+      notify(`每日目标已改为 ${goal} 个不同单词。`);
+    }
+  });
+  document.addEventListener('shici-garden-study', event => {
+    const word = state.words.find(item => item.id === event.detail?.id);
+    if (!word) return;
+    if (change(() => { state.mode = 'all'; state.currentId = word.id; flipped = false; })) {
+      $('flashcard').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('flashcard').focus({ preventScroll: true });
+    }
+  });
+  document.addEventListener('shici-save-example', event => {
+    const { id, example } = event.detail || {};
+    const entry = state.words.find(word => word.id === id);
+    if (!entry || !example || !['sense', 'en', 'zh'].every(key => typeof example[key] === 'string' && example[key].trim()) || example.sense.length > 500 || example.en.length > 1000 || example.zh.length > 1000) return;
+    if ((entry.examples || []).filter(item => item.sense !== example.sense).length >= 40) { notify('每个单词最多保存 40 条自定义例句。'); return; }
+    if (change(() => { entry.examples = [...(entry.examples || []).filter(item => item.sense !== example.sense), { ...example }]; })) notify('例句已保存，学习记录已保留。');
+  });
+  $('flashcard').addEventListener('click', flip);
+  $('next').addEventListener('click', draw);
+  $('forgot').addEventListener('click', () => grade('difficult'));
+  $('remembered').addEventListener('click', () => grade('known'));
+  for (const mode of ['all', 'difficult']) $('mode-' + mode).addEventListener('click', () => change(() => { state.mode = mode; choose(); }));
+  $('search').addEventListener('input', renderList);
+  document.addEventListener('keydown', event => {
+    if (['INPUT', 'TEXTAREA', 'BUTTON', 'SELECT', 'SUMMARY'].includes(event.target.tagName) || $('import-dialog').open || event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.code === 'Space') { event.preventDefault(); flip(); }
+    if (event.code === 'ArrowRight') { event.preventDefault(); draw(); }
+  });
+  $('export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ ...state, app: 'shici', exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = `拾词备份-${dayKey()}-${Date.now()}.json`; document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000); notify('已发起备份下载，请在浏览器下载记录中查看。');
+  });
+  $('import').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', async event => {
+    const file = event.target.files[0]; event.target.value = '';
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { notify('文件过大，请选择小于 20 MB 的拾词 JSON 备份。'); return; }
+    try {
+      pendingImport = validate(JSON.parse((await file.text()).replace(/^\uFEFF/, '')));
+      $('import-summary').textContent = `这份备份有 ${pendingImport.words.length} 个单词，包含学习记录；每日目标和花园成长也会一并恢复。旧备份会根据已有记录初始化花园。`;
+      $('import-dialog').showModal();
+    } catch (error) { pendingImport = null; notify(error instanceof SyntaxError ? '文件不是有效的 JSON 备份，当前词库未改动。' : error.message); }
+  });
+  $('cancel-import').addEventListener('click', () => { pendingImport = null; $('import-dialog').close(); });
+  $('import-dialog').addEventListener('cancel', () => { pendingImport = null; });
+  $('confirm-import').addEventListener('click', () => {
+    if (!pendingImport) return;
+    const previous = state, wasLoadFailed = loadFailed; state = pendingImport; loadFailed = false;
+    if (!current()) choose();
+    if (!save()) { state = previous; loadFailed = wasLoadFailed; render(); return; }
+    flipped = false; pendingImport = null; $('import-dialog').close(); render(); notify('备份已恢复，词库和学习记录都回来了。');
+  });
+  // 多个标签页保持一致，避免旧页面意外覆盖刚保存的记录。
+  window.addEventListener('storage', event => {
+    if (event.key !== KEY) return;
+    try {
+      if (!event.newValue) { loadFailed = true; warning('其他页面已清除本地记录。请导出当前内容，或导入备份恢复。'); return; }
+      state = validate(JSON.parse(event.newValue)); flipped = false; loadFailed = false; if (!current()) choose(); render();
+    } catch { loadFailed = true; warning('其他页面的记录无法读取，请导出当前内容后恢复有效备份。'); }
+  });
+  state = validate(state);
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw !== null) state = validate(JSON.parse(raw));
+    if (!current()) choose();
+    save();
+  } catch {
+    loadFailed = true;
+    warning('原本地记录无法读取，已保护原数据不被覆盖。下方暂时展示示例词；请从有效备份恢复。');
+    choose();
+  }
+  render();
+  const refreshDay = () => { if (lastRenderedDay !== dayKey()) render(); };
+  window.addEventListener('focus', refreshDay);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshDay(); });
+  setInterval(refreshDay, 30000);
+})();
+
+/* ==========================================================================
+   拾词 · 动效增强层（追加脚本）
+   只添加视觉动效，不读取、不写入、不修改任何学习数据。
+   ========================================================================== */
+(() => {
+  'use strict';
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const doc = document.documentElement;
+  const $ = id => document.getElementById(id);
+  doc.classList.add('motion-ready');
+
+  /* ---------- 浸水感：整页水光 + 跟随指针的折射 ---------- */
+  const waterLayer = document.createElement('div');
+  waterLayer.className = 'water-layer';
+  waterLayer.setAttribute('aria-hidden', 'true');
+  waterLayer.innerHTML = `
+    <div class="water-parallax">
+      <i class="water-caustics wave-a"></i>
+      <i class="water-caustics wave-b"></i>
+      <i class="water-caustics wave-c"></i>
+    </div>
+    <div class="water-defs">
+      <svg focusable="false" aria-hidden="true">
+        <filter id="water-lens" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.009 0.014" numOctaves="2" seed="7" result="noise"/>
+          <feOffset in="noise" dx="0" dy="0" result="flow"/>
+          <feDisplacementMap in="SourceGraphic" in2="flow" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </svg>
+    </div>`;
+  document.body.append(waterLayer);
+
+  // 局部水透镜：只覆盖指针附近一小片，用 backdrop-filter 折射底下的内容。
+  // 面积小，代价可控；边缘由径向遮罩羽化，所以看不到任何圆形轮廓。
+  const lens = document.createElement('i');
+  lens.className = 'water-lens is-off';
+  lens.setAttribute('aria-hidden', 'true');
+  document.body.append(lens);
+
+  const parallax = waterLayer.querySelector('.water-parallax');
+  const lensMap = waterLayer.querySelector('#water-lens feDisplacementMap');
+  const lensFlow = waterLayer.querySelector('#water-lens feOffset');
+
+  const toTop = document.createElement('button');
+  toTop.type = 'button';
+  toTop.className = 'scroll-top';
+  toTop.setAttribute('aria-label', '回到顶部');
+  toTop.title = '回到顶部';
+  toTop.innerHTML = '<svg viewBox="0 0 46 46" aria-hidden="true"><circle class="scroll-top-track" cx="23" cy="23" r="19"/><circle class="scroll-top-arc" cx="23" cy="23" r="19"/></svg><span aria-hidden="true">↑</span>';
+  document.body.append(toTop);
+
+  const topbar = document.querySelector('.topbar');
+  const arc = toTop.querySelector('.scroll-top-arc');
+  const ARC_LENGTH = 2 * Math.PI * 19;
+  const scroller = () => doc.scrollingElement || doc;
+
+  // 指针位置与“水压”：移动越快，水面被推开得越明显，停下后自然回弹。
+  const pointer = { x: innerWidth / 2, y: innerHeight * .45, at: -1e9, seen: false };
+  let energy = 0;
+  let sway = 0;
+  let lensX = pointer.x;
+  let lensY = pointer.y;
+  let lensOpen = 0;
+  let lensScale = 0;
+  let wetEl = null;
+  let wetLostAt = 0;
+  let lastWetCheck = 0;
+  let lastLensPaint = 0;
+  let lastPointerAt = -1e9;
+  let rafId = 0;
+  let lastFrame = performance.now();
+  let vw = innerWidth;
+  let vh = innerHeight;
+
+  addEventListener('resize', () => { vw = innerWidth; vh = innerHeight; }, { passive: true });
+
+  const wake = () => {
+    if (rafId) return;
+    lastFrame = performance.now();
+    rafId = requestAnimationFrame(tick);
+  };
+
+  // 只有指针落在这几块内容上时，附近的水面才被轻轻带起。
+  const WET_SELECTOR = '.stats > div, .daily-goal, .study-examples, .word-row, .garden-tile, .backup';
+  // 单词卡完全排除：卡片保持清晰，只保留原有的鼠标倾斜与翻面。
+  const DRY_SELECTOR = '#flashcard, .flashcard-wrap';
+  // 指针事件本身就带着命中元素，优先用它，避免每次移动都做 elementFromPoint
+  //（那会强制同步布局，在内容多的页面上是明显的卡顿来源）。
+  const pickWet = target => {
+    const under = target instanceof Element ? target : document.elementFromPoint(pointer.x, pointer.y);
+    const next = under && !under.closest(DRY_SELECTOR) ? under.closest(WET_SELECTOR) : null;
+    if (next) {
+      wetLostAt = 0;
+      wetEl = next;
+    } else if (wetEl && !wetLostAt) {
+      // 指针扫过区块缝隙时留一点余量，水感是慢慢收住而不是突然消失。
+      wetLostAt = performance.now();
+    }
+  };
+
+  addEventListener('pointermove', event => {
+    const now = performance.now();
+    const dt = Math.max(8, Math.min(90, now - pointer.at));
+    const dx = event.clientX - pointer.x;
+    const dy = event.clientY - pointer.y;
+    const speed = Math.min(3.4, Math.hypot(dx, dy) / dt);
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    pointer.at = now;
+    pointer.seen = true;
+    lastPointerAt = now;
+    energy = Math.min(1, energy + .045 + speed * .085);
+    // 直接在指针事件里切换目标，避免等下一帧才响应。
+    if (now - lastWetCheck > 24) {
+      lastWetCheck = now;
+      pickWet(event.target);
+    }
+    wake();
+  }, { passive: true });
+
+  addEventListener('pointerdown', event => {
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    pointer.at = performance.now();
+    pointer.seen = true;
+    lastPointerAt = pointer.at;
+    energy = Math.min(1, energy + .2);
+    pickWet(event.target);
+    wake();
+  }, { passive: true });
+
+  // 指针离开窗口或页面失焦时，水感自然收住，不会留在原地。
+  const leave = () => { wetEl = null; wetLostAt = 0; wake(); };
+  addEventListener('pointerleave', leave, { passive: true });
+  addEventListener('pointerout', event => { if (!event.relatedTarget) leave(); }, { passive: true });
+  addEventListener('mouseleave', leave, { passive: true });
+  addEventListener('blur', leave);
+
+  const tick = now => {
+    rafId = 0;
+    const dt = Math.min(48, Math.max(8, now - lastFrame));
+    lastFrame = now;
+    energy *= Math.pow(.9, dt / 16.7);
+    sway *= Math.pow(.88, dt / 16.7);
+
+    const nx = pointer.x / vw - .5;
+    const ny = pointer.y / vh - .5;
+    parallax.style.transform =
+      `translate3d(${(nx * 22).toFixed(1)}px, ${(ny * 16 - sway * 26).toFixed(1)}px, 0)`;
+
+    // 指针停在水面区域时保持很轻的流动；离开后才收住。
+    const active = pointer.seen && (now - pointer.at < 300 || !!wetEl);
+    if (now - pointer.at < 300 && now - lastWetCheck > 80) {
+      lastWetCheck = now;
+      pickWet();
+    }
+    if (wetEl && wetLostAt && now - wetLostAt > 240) {
+      wetEl = null;
+      wetLostAt = 0;
+    }
+
+    // 开合是渐变的：换到另一块内容时先收住再展开，不会整块突然变形。
+    const wantOpen = active && wetEl ? 1 : 0;
+    lensOpen += (wantOpen - lensOpen) * (1 - Math.pow(.84, dt / 16.7));
+    if (lensOpen < .002 && !wantOpen) lensOpen = 0;
+
+    // 透镜稍微滞后地跟着指针，像水被拖着走；位置也做插值，移动是连续的。
+    const follow = 1 - Math.pow(.72, dt / 16.7);
+    lensX += (pointer.x - lensX) * follow;
+    lensY += (pointer.y - lensY) * follow;
+
+    // 位移幅度保持很小：只是刚好可察觉的折射，不会把字拽歪，也不产生光斑。
+    // 上限压到 4.0（之前 7）：快速移动时文字只会轻微错位，不会出现重影或拖影。
+    const scaleTarget = wantOpen ? Math.min(4, 2.3 + energy * 1.7) : 0;
+    lensScale += (scaleTarget - lensScale) * (1 - Math.pow(.78, dt / 16.7));
+    if (lensScale < .08 && !wantOpen) lensScale = 0;
+
+    if (lensOpen > .004) {
+      lens.classList.remove('is-off');
+      lens.style.transform = `translate3d(${lensX.toFixed(1)}px, ${lensY.toFixed(1)}px, 0)`;
+      // 折射副本只占七成：底下的原文仍然清晰，不会叠出明显重影。
+      lens.style.opacity = (lensOpen * .7).toFixed(3);
+      if (now - lastLensPaint > 33) {
+        lastLensPaint = now;
+        const t = now / 1000;
+        lensMap.setAttribute('scale', Math.max(.01, lensScale).toFixed(2));
+        lensFlow.setAttribute('dx', (10 * Math.sin(t * .75) + 4 * Math.sin(t * 1.9)).toFixed(1));
+        lensFlow.setAttribute('dy', (7 * Math.cos(t * .6) + 3 * Math.cos(t * 1.5)).toFixed(1));
+      }
+    } else {
+      lens.classList.add('is-off');
+    }
+
+    const settled = energy < .006 && Math.abs(sway) < .01 && lensOpen < .004 && lensScale < .05;
+    if (settled && now - lastPointerAt > 1000) {
+      lens.classList.add('is-off');
+      return;
+    }
+    rafId = requestAnimationFrame(tick);
+  };
+
+  let scrollTick = false;
+  let lastTop = scroller().scrollTop;
+  let lastTime = performance.now();
+
+  const onScroll = () => {
+    const el = scroller();
+    const top = el.scrollTop;
+    const max = el.scrollHeight - el.clientHeight;
+    const progress = max > 0 ? Math.min(1, Math.max(0, top / max)) : 0;
+    doc.style.setProperty('--scroll-y', String(Math.min(top, 420)));
+    if (arc) arc.style.strokeDashoffset = String(ARC_LENGTH * (1 - progress));
+    toTop.classList.toggle('is-on', top > 620);
+    if (topbar) topbar.classList.toggle('is-scrolled', top > 8);
+
+    // 滚动像在水里推动水体：水光轻微滞后，停止后自然回落。
+    const now = performance.now();
+    const dt = Math.max(1, now - lastTime);
+    const speed = Math.abs(top - lastTop) / dt; // px / ms
+    if (speed > .04) {
+      sway = Math.min(1.4, sway + speed * .5);
+      wake();
+    }
+    // 指针停住时如果页面在滚动，水透镜要跟着新的内容走。
+    if (pointer.seen) pickWet();
+
+    lastTop = top;
+    lastTime = now;
+    scrollTick = false;
+  };
+
+  addEventListener('scroll', () => {
+    if (scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(onScroll);
+  }, { passive: true });
+
+  toTop.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+  onScroll();
+
+  /* ---------- 滚动入场 ---------- */
+  const sections = [...document.querySelectorAll('.intro, .stats, .daily-goal, .workspace > .panel, .word-garden, .library, .backup')];
+  const tiltTargets = new Set([...document.querySelectorAll('.daily-goal, .workspace > .panel, .word-garden, .library')]);
+  sections.forEach((el, index) => {
+    el.classList.add('reveal');
+    if (tiltTargets.has(el)) el.classList.add('reveal-tilt');
+    // 延迟只用于同屏相邻元素的轻微错峰，避免下方区块迟迟不显形。
+    el.style.setProperty('--reveal-delay', `${Math.min(index, 3) * 60}ms`);
+  });
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    }, { threshold: 0.03, rootMargin: '0px 0px -3% 0px' });
+    sections.forEach(el => io.observe(el));
+  } else {
+    sections.forEach(el => el.classList.add('is-visible'));
+  }
+
+  /* ---------- 数字滚动 ---------- */
+  const counters = ['total', 'difficult-total', 'known-total', 'today-total'].map($).filter(Boolean);
+  const targets = new Map(counters.map(el => [el, Number(el.textContent) || 0]));
+  const shown = new Map(counters.map(el => [el, Number(el.textContent) || 0]));
+  const busy = new WeakSet();
+  const readNumber = el => Number((el.textContent || '').replace(/[^\d]/g, '')) || 0;
+
+  const animateNumber = (el, from, to) => {
+    busy.add(el);
+    const start = performance.now();
+    const duration = 720;
+    const frame = now => {
+      const k = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - k, 3);
+      const value = Math.round(from + (to - from) * eased);
+      shown.set(el, value);
+      el.textContent = String(value);
+      if (k < 1) { requestAnimationFrame(frame); return; }
+      shown.set(el, to);
+      el.textContent = String(to);
+      busy.delete(el);
+      // 动画期间数据又变了：从当前值继续补到最新目标，而不是停在旧值。
+      const latest = targets.get(el);
+      if (latest !== undefined && latest !== to) animateNumber(el, to, latest);
+    };
+    requestAnimationFrame(frame);
+  };
+
+  new MutationObserver(records => {
+    const visited = new Set();
+    for (const record of records) {
+      const el = record.target.nodeType === 3 ? record.target.parentElement : record.target;
+      if (!el || !counters.includes(el) || visited.has(el)) continue;
+      // 动画帧自身的写入不算数据变化，忽略，避免把中间值误当成新目标。
+      if (busy.has(el) && readNumber(el) === shown.get(el)) continue;
+      visited.add(el);
+      const to = readNumber(el);
+      targets.set(el, to);
+      if (busy.has(el)) continue; // 动画结束后会补到最新值
+      const from = shown.has(el) ? shown.get(el) : to;
+      if (from !== to) animateNumber(el, from, to);
+    }
+  }).observe(document.querySelector('.stats') || document.body, { childList: true, characterData: true, subtree: true });
+
+  /* ---------- 闪卡：倾斜、翻面、文字切换 ---------- */
+  const card = $('flashcard');
+  const cardText = $('card-text');
+
+  if (card && cardText) {
+    const fitText = () => {
+      const length = (cardText.textContent || '').length;
+      cardText.classList.toggle('is-long', length > 16);
+      cardText.classList.toggle('is-xl', length > 40);
+    };
+    fitText();
+
+    new MutationObserver(() => {
+      fitText();
+      cardText.classList.remove('is-swapping');
+      void cardText.offsetWidth;
+      cardText.classList.add('is-swapping');
+    }).observe(cardText, { childList: true, characterData: true, subtree: true });
+
+    let lastPressed = card.getAttribute('aria-pressed');
+    let turnTimer;
+    new MutationObserver(() => {
+      const pressed = card.getAttribute('aria-pressed');
+      if (pressed === lastPressed) return;
+      lastPressed = pressed;
+      card.style.setProperty('--tilt-x', '0deg');
+      card.style.setProperty('--tilt-y', '0deg');
+      clearTimeout(turnTimer);
+      card.classList.remove('is-turning');
+      void card.offsetWidth;
+      card.classList.add('is-turning');
+      turnTimer = setTimeout(() => card.classList.remove('is-turning'), 720);
+    }).observe(card, { attributes: true, attributeFilter: ['aria-pressed'] });
+
+    const wrap = card.closest('.flashcard-wrap');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (wrap && finePointer) {
+      let raf = null, lastEvent = null;
+      wrap.addEventListener('pointermove', event => {
+        if (card.classList.contains('is-turning')) return;
+        lastEvent = event;
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = null;
+          if (!lastEvent) return;
+          const rect = card.getBoundingClientRect();
+          const x = (lastEvent.clientX - rect.left) / rect.width - .5;
+          const y = (lastEvent.clientY - rect.top) / rect.height - .5;
+          card.style.setProperty('--tilt-y', `${(x * 7).toFixed(2)}deg`);
+          card.style.setProperty('--tilt-x', `${(-y * 7).toFixed(2)}deg`);
+          card.style.setProperty('--glow-x', `${((x + .5) * 100).toFixed(1)}%`);
+          card.style.setProperty('--glow-y', `${((y + .5) * 100).toFixed(1)}%`);
+        });
+      });
+      wrap.addEventListener('pointerleave', () => {
+        card.style.setProperty('--tilt-x', '0deg');
+        card.style.setProperty('--tilt-y', '0deg');
+      });
+    }
+  }
+
+  /* ---------- 按钮水波纹 ---------- */
+  const rippleTarget = '.button, .goal-start, .goal-options button, .segmented button, .garden-filters button, .tag, .outline';
+  document.addEventListener('pointerdown', event => {
+    const target = event.target.closest(rippleTarget);
+    if (!target || target.disabled) return;
+    const rect = target.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    if (!size) return;
+    const ink = document.createElement('span');
+    ink.className = 'ripple';
+    ink.style.width = ink.style.height = `${size}px`;
+    ink.style.left = `${event.clientX - rect.left - size / 2}px`;
+    ink.style.top = `${event.clientY - rect.top - size / 2}px`;
+    target.append(ink);
+    setTimeout(() => ink.remove(), 640);
+  });
+})();

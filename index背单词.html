@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>拾词 · 每天记住一点点</title>
+  <link rel="stylesheet" href="vocab.css">
+  <script src="vocab-spell/typo-js/typo.js" defer></script>
+  <script src="vocab-spell/dictionaries.js" defer></script>
+  <script src="vocab-spell.js" defer></script>
+  <script src="vocab-meanings/dictionary.js" defer></script>
+  <script src="vocab-meanings/phrases.js" defer></script>
+  <script src="vocab-meanings/phrase-supplements.js" defer></script>
+  <script src="vocab-examples-data.js" defer></script>
+  <script src="vocab-examples-extra.js" defer></script>
+  <script src="vocab-examples.js" defer></script>
+  <script src="vocab-study-examples.js" defer></script>
+  <script src="vocab-meanings.js" defer></script>
+  <script src="vocab-speech.js" defer></script>
+  <script src="vocab-motivation.js" defer></script>
+  <script src="vocab.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="topbar-inner"><a class="brand" href="index背单词.html"><span class="brand-icon">拾</span>拾词 <small>WORD BY WORD</small></a><span class="local-badge">● 离线可用 · 本地保存</span></div></header>
+  <main>
+    <section class="intro"><p class="eyebrow">A LITTLE EVERY DAY</p><h1>每天记住一点点。</h1><p>从一个单词开始，把陌生变成熟悉。</p></section>
+    <div id="storage-warning" class="warning" role="alert" hidden></div>
+    <section class="stats" aria-label="学习概况">
+      <div><span>我的词库</span><strong id="total">0</strong><small>个单词</small></div>
+      <div><span>还不会</span><strong id="difficult-total">0</strong><small>个待巩固</small></div>
+      <div><span>已掌握</span><strong id="known-total">0</strong><small>个小收获</small></div>
+      <div><span>今日复习</span><strong id="today-total">0</strong><small>次主动回忆</small></div>
+    </section>
+    <section id="daily-goal" class="daily-goal" aria-labelledby="goal-title">
+      <div id="goal-ring" class="goal-ring" role="progressbar" aria-label="每日单词目标" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="goal-track" cx="50" cy="50" r="43"/><circle id="goal-arc" class="goal-arc" cx="50" cy="50" r="43"/></svg>
+        <div class="goal-ring-text"><strong id="goal-done">0</strong><span id="goal-target">/ 10</span><small>今日记住</small></div>
+      </div>
+      <div class="goal-story"><p class="eyebrow" id="goal-title">今天的一小步</p><h2 id="goal-copy">今天，记住 10 个单词。</h2><p id="goal-detail">先翻卡，再点“记住了”。每个词每天只计一次。</p><p id="goal-complete" class="goal-complete" hidden>✦ 目标完成，可以继续巩固，也可以明天再来。</p><button type="button" id="goal-start" class="goal-start">去记一个词 →</button></div>
+      <div class="goal-settings"><span>每天的小目标</span><div class="goal-options" role="group" aria-label="选择每日目标"><button type="button" data-daily-goal="5" aria-pressed="false">5 词</button><button type="button" data-daily-goal="10" aria-pressed="true">10 词</button><button type="button" data-daily-goal="20" aria-pressed="false">20 词</button></div><small>按自己的节奏，随时调整。</small></div>
+      <div class="goal-petals" aria-hidden="true"><i>✦</i><i>✦</i><i>●</i><i>✦</i><i>●</i><i>✦</i></div>
+      <span id="goal-announcement" class="sr-only" role="status" aria-live="polite"></span>
+    </section>
+    <div class="workspace">
+      <section class="panel study" aria-labelledby="study-title">
+        <div class="section-heading"><h2 id="study-title">开始学习</h2><span id="pool-count" class="muted"></span></div>
+        <div class="segmented" aria-label="学习范围"><button type="button" id="mode-all" aria-pressed="true">全部单词</button><button type="button" id="mode-difficult" aria-pressed="false">只练不会的</button></div>
+        <div class="flashcard-wrap">
+        <button type="button" id="flashcard" class="flashcard" aria-label="翻开卡片查看中文释义" aria-pressed="false">
+          <span id="card-label" class="eyebrow">ENGLISH / 英文</span><strong id="card-text">准备好了吗？</strong><span id="card-hint">添加单词，开始你的学习</span><span class="flip-hint">↻ 点击卡片翻面</span>
+        </button>
+        <button type="button" id="pronounce" class="pronounce" aria-label="朗读英文单词" title="朗读英文单词" disabled><span aria-hidden="true">🔊</span> <span id="pronounce-label">发音</span></button>
+        </div>
+        <p id="speech-status" class="speech-status" role="status" aria-live="polite" hidden></p>
+        <p id="card-record" class="card-record">先回忆，再翻面，记忆更牢固。</p>
+        <section id="study-examples" class="study-examples" aria-labelledby="study-examples-title" hidden>
+          <div class="study-examples-heading"><h3 id="study-examples-title">例句</h3><span id="study-examples-word"></span></div>
+          <p id="study-examples-status" class="study-examples-status" role="status" aria-live="polite"></p>
+          <div id="study-examples-list" class="study-examples-list"></div>
+        </section>
+        <div class="grade-buttons"><button type="button" id="forgot" class="button soft-orange">还不会</button><button type="button" id="remembered" class="button soft-green">记住了 ✓</button></div>
+        <button type="button" id="next" class="button primary wide">随机抽一个 →</button>
+        <p class="shortcut">小提示：空格翻卡 · → 随机抽词</p>
+      </section>
+      <aside class="panel add-panel" aria-labelledby="add-title"><p class="eyebrow">GROW YOUR COLLECTION</p><h2 id="add-title">收下一个新单词</h2><p class="muted">遇到喜欢的词，就把它留在这里。</p>
+        <form id="add-form">
+          <label for="word">英文单词或短语</label>
+          <div class="spell-input-wrap">
+            <div id="word-mirror" class="word-mirror" aria-hidden="true"><div id="word-mirror-text"></div></div>
+            <input id="word" name="word" lang="en" placeholder="例如：serendipity" maxlength="100" required autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="spell-status">
+          </div>
+          <p id="spell-status" class="spell-status" role="status" aria-live="polite">正在准备离线拼写检查…</p>
+          <div id="spell-suggestions" class="spell-suggestions"></div>
+          <section id="meaning-reference" class="meaning-reference" aria-labelledby="meaning-reference-title" hidden>
+            <h3 id="meaning-reference-title">常见中文意思</h3>
+            <p id="meaning-query-status" class="meaning-query-status" role="status" aria-live="polite"></p>
+            <fieldset id="meaning-options" class="meaning-options"><legend class="sr-only">选择要加入或复制的释义，可多选</legend></fieldset>
+            <div id="meaning-actions" class="meaning-actions" hidden>
+              <button id="meaning-insert" type="button">加入已选释义</button>
+              <button id="meaning-copy-selected" type="button">复制已选</button>
+              <button id="meaning-copy-all" type="button">复制全部</button>
+            </div>
+            <p id="meaning-feedback" class="meaning-feedback" role="status" aria-live="polite"></p>
+            <textarea id="meaning-copy-fallback" aria-label="待复制的释义，可选中文字手动复制" readonly rows="3" hidden></textarea>
+            <small>本地词典参考 · 可多选，也可在下方写自己的意思。</small>
+          </section>
+          <label for="meaning">中文释义</label><textarea id="meaning" name="meaning" placeholder="例如：不期而遇的美好" maxlength="500" required rows="3"></textarea>
+          <div id="draft-examples" class="draft-examples" hidden></div>
+          <button class="button primary wide" type="submit">＋ 加入我的词库</button>
+        </form>
+        <div class="gentle-note"><span>✦</span><p>不用一次记很多。<br>今天的一点点，也是在进步。</p></div>
+      </aside>
+    </div>
+    <section id="word-garden" class="panel word-garden" aria-labelledby="garden-title">
+      <div class="section-heading"><div><p class="eyebrow">每一次回忆，都在生根</p><h2 id="garden-title">我的单词花园</h2></div><span id="garden-total" class="garden-total"></span></div>
+      <p class="garden-intro">新词是种子。不同日期记住三次，就会开花；忘记了，回来浇浇水就好。</p>
+      <div class="garden-toolbar"><div class="garden-filters" role="group" aria-label="花园筛选"><button type="button" data-garden-filter="all" aria-pressed="true">全部</button><button type="button" data-garden-filter="water" aria-pressed="false">需要浇水 <span id="garden-water-count">0</span></button><button type="button" data-garden-filter="bloom" aria-pressed="false">已开花 <span id="garden-bloom-count">0</span></button></div><p id="garden-counts"></p></div>
+      <div id="garden-grid" class="garden-grid"></div>
+      <div class="garden-footer"><span>点一盆，去复习这个词。</span><div class="garden-paging"><button id="garden-prev" type="button" aria-label="花园上一页">←</button><span id="garden-page">1 / 1</span><button id="garden-next" type="button" aria-label="花园下一页">→</button></div></div>
+    </section>
+    <section class="panel library" aria-labelledby="library-title"><div class="section-heading library-heading"><div><h2 id="library-title">我的单词本</h2><p class="muted">所有积累，都在这里。</p></div><label class="search"><span class="sr-only">搜索英文或中文</span><input type="search" id="search" placeholder="搜索英文或中文…"></label></div><div id="word-list" class="word-list"></div><p id="list-count" class="muted list-count"></p></section>
+    <section class="backup"><div><h2>给积累留一份备份</h2><p>词库和学习记录只保存在当前浏览器。建议定期导出。</p></div><div class="backup-actions"><button id="export" type="button" class="button outline">↓ 导出备份</button><button id="import" type="button" class="button outline">↑ 导入备份</button><input id="import-file" type="file" accept=".json,application/json" hidden></div></section>
+    <footer>拾词 · 你的私人单词小角落 <span>本地学习 · 无需登录 · 免费使用</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="import-dialog"><h2>恢复这份备份？</h2><p id="import-summary"></p><p class="muted">恢复会替换当前词库和学习记录。建议先取消并导出当前备份。</p><div class="dialog-actions"><button id="cancel-import" class="button outline" type="button">取消</button><button id="confirm-import" class="button primary" type="button">确认恢复</button></div></dialog>
+</body>
+</html>
