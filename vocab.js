@@ -142,15 +142,43 @@
       notify(completed ? '今天的小目标完成啦！你的努力正在生根。' : status === 'known' ? '已记录「记住了」，继续下一个！' : '已加入不会的单词，花园里会提醒你来浇水。');
     }
   }
+  // 回车连录：释义为空时，优先用已勾选的释义，否则取词典第一条。
+  function pickMeanings(word) {
+    const checked = [...document.querySelectorAll('#meaning-options input[type="checkbox"]:checked')]
+      .map(box => box.value.trim()).filter(Boolean);
+    if (checked.length) return checked;
+    const senses = globalThis.ShiciMeanings?.lookup?.(word) || [];
+    return senses.slice(0, 1);
+  }
   $('add-form').addEventListener('submit', event => {
     event.preventDefault();
-    const word = $('word').value.trim(), meaning = $('meaning').value.trim();
-    if (!word || !meaning) { notify('请把英文和中文释义都填上。'); return; }
-    if (!/[a-z]/i.test(word)) { notify('英文单词或短语中至少需要一个英文字母。'); $('word').focus(); return; }
-    if (state.words.some(w => w.word.toLowerCase() === word.toLowerCase())) { notify('这个单词已经在词库中了，请勿重复添加。'); return; }
+    const word = $('word').value.trim();
+    const meaningBox = $('meaning');
+    let meaning = meaningBox.value.trim(), autoFilled = false;
+    if (!word) { notify('先打一个英文单词，再按回车。'); $('word').focus(); return; }
+    if (!/[a-z]/i.test(word)) { notify('英文单词或短语中至少需要一个英文字母。'); $('word').focus(); $('word').select(); return; }
+    if (state.words.some(w => w.word.toLowerCase() === word.toLowerCase())) { notify('这个单词已经在词库中了，请勿重复添加。'); $('word').focus(); $('word').select(); return; }
     if (state.words.length >= 20000) { notify('词库已达到 20000 个单词上限，请先导出备份整理。'); return; }
-    if (change(() => { const entry = { id: uid(), word, meaning, status: 'new', reviews: 0, lastReviewed: null, garden: { stage: 0, lastGrowthDay: null } }; const examples = globalThis.ShiciExamples?.draftExamples(word, meaning); if (examples?.length) entry.examples = examples; state.words.unshift(entry); state.currentId = entry.id; state.mode = 'all'; flipped = false; })) { $('add-form').reset(); $('word').focus(); notify(`已收下「${word}」，也种下了一颗小种子。`); }
+    if (!meaning) {
+      const picks = pickMeanings(word);
+      if (picks.length) { meaning = picks.join('；'); meaningBox.value = meaning; autoFilled = true; }
+      else { notify('本地词典没有这个词，请填一下中文释义再按回车。'); meaningBox.focus(); return; }
+    }
+    if (change(() => { const entry = { id: uid(), word, meaning, status: 'new', reviews: 0, lastReviewed: null, garden: { stage: 0, lastGrowthDay: null } }; const examples = globalThis.ShiciExamples?.draftExamples(word, meaning); if (examples?.length) entry.examples = examples; state.words.unshift(entry); state.currentId = entry.id; state.mode = 'all'; flipped = false; })) {
+      $('add-form').reset();
+      $('word').focus();
+      notify(`已收下「${word}」${autoFilled ? '（释义取自词典第 1 条，可在上下文中再核对）' : ''}，继续打下一个，回车就收下。`);
+    }
   });
+  // 单词框 / 释义框里按回车都等于「收下」；释义框 Shift+回车保留换行。
+  for (const id of ['word', 'meaning']) {
+    $(id).addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (event.isComposing || event.keyCode === 229) return;
+      event.preventDefault();
+      $('add-form').requestSubmit();
+    });
+  }
   document.addEventListener('shici-goal-change', event => {
     const goal = event.detail?.goal;
     if (![5, 10, 20].includes(goal) || state.motivation.goal === goal) return;

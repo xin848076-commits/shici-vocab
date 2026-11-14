@@ -1092,3 +1092,6 @@ html.motion-ready .reveal.is-visible .section-heading h2::after { width: 46px; }
     transition-duration: .001ms !important;
   }
 }
+
+/* enter-to-add hint */
+.enter-hint { margin: 10px 0 0; text-align: center; font-size: 12px; letter-spacing: .02em; color: #8a977b; }
