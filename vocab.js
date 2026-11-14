@@ -354,6 +354,22 @@
   const $ = id => document.getElementById(id);
   doc.classList.add('motion-ready');
 
+  /* ---------- 自适应降级：机器带不动就自动收掉最贵的装饰层 ----------
+     首屏稳定后采样 60 帧，超过四成帧长于 26ms（约 38fps 以下）就标记 lite-motion，
+     由 CSS 关掉水透镜、光斑漂移与纸纹混合。表现力留在好机器上，弱机器优先保流畅。 */
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setTimeout(() => {
+      let frames = 0, slow = 0, last = performance.now();
+      const sample = now => {
+        const dt = now - last; last = now; frames++;
+        if (dt > 26) slow++;
+        if (frames < 60) { requestAnimationFrame(sample); return; }
+        if (slow > 24) doc.classList.add('lite-motion');
+      };
+      requestAnimationFrame(sample);
+    }, 1600);
+  }
+
   /* ---------- 浸水感：整页水光 + 跟随指针的折射 ---------- */
   const waterLayer = document.createElement('div');
   waterLayer.className = 'water-layer';
@@ -421,6 +437,8 @@
 
   const wake = () => {
     if (rafId) return;
+    // 降级后不再跑透镜动画，省下每帧的滤镜重算。
+    if (doc.classList.contains('lite-motion')) return;
     lastFrame = performance.now();
     rafId = requestAnimationFrame(tick);
   };
@@ -483,6 +501,7 @@
 
   const tick = now => {
     rafId = 0;
+    if (doc.classList.contains('lite-motion')) { lens.classList.add('is-off'); return; }
     const dt = Math.min(48, Math.max(8, now - lastFrame));
     lastFrame = now;
     energy *= Math.pow(.9, dt / 16.7);
@@ -493,8 +512,9 @@
     parallax.style.transform =
       `translate3d(${(nx * 22).toFixed(1)}px, ${(ny * 16 - sway * 26).toFixed(1)}px, 0)`;
 
-    // 指针停在水面区域时保持很轻的流动；离开后才收住。
-    const active = pointer.seen && (now - pointer.at < 300 || !!wetEl);
+    // 指针停住就收住水感：悬停时持续重算 backdrop-filter 会让整页一直重绘，
+    // 是滚动发涩的主要来源，所以只有真正在移动时才展开透镜。
+    const active = pointer.seen && now - pointer.at < 320;
     if (now - pointer.at < 300 && now - lastWetCheck > 80) {
       lastWetCheck = now;
       pickWet();

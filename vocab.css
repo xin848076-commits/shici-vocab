@@ -1127,3 +1127,10 @@ html.motion-ready .reveal.is-visible .section-heading h2::after { width: 46px; }
   .add-panel{order:2}
   .study-side .study-examples-list{max-height:44vh;flex:none}
 }
+
+/* 自适应降级：帧率撑不住时收掉最贵的装饰，布局与内容完全不变 */
+html.lite-motion .water-lens { display: none; }
+html.lite-motion .water-caustics { animation: none !important; }
+html.lite-motion body::before { animation: none !important; }
+html.lite-motion body::after { mix-blend-mode: normal; opacity: .018; }
+html.lite-motion .water-parallax { transform: none !important; }
