@@ -1,0 +1,6 @@
+# 依赖与构建
+node_modules/
+dist/
+# 日志
+*.log
+.DS_Store

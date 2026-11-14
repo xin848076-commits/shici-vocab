@@ -1,0 +1,8 @@
+{
+  "project": "skywind3000/ECDICT",
+  "commit": "39cfb9672c0906b63569e0453c2e6abfb9ab182a",
+  "source": "https://raw.githubusercontent.com/skywind3000/ECDICT/39cfb9672c0906b63569e0453c2e6abfb9ab182a/ecdict.csv",
+  "sha256": "d1ecbdf9ee2b920afb6f430ca6b6bb9f559588cf0dff86e04bd255f9390843cc",
+  "entries": 48065,
+  "transformation": "Exam-tagged entries or BNC/contemporary frequency rank <=40000; lowercase keys and retain Chinese translation. No executable source imported."
+}
