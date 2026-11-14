@@ -23,20 +23,46 @@
     const key = wordKey(word);
     return Object.hasOwn(data, key) ? data[key].map(row => row[0].split('|')[0]) : null;
   }
+  // 释义匹配用：去掉括号补充、标点与空白，只留主干文字。
+  const looseText = text => text.replace(/[（(][^）)]*[）)]/g, '').replace(/[\s·・,，;；、.。!！?？'"“”‘’…]/g, '');
+  function bigramSet(text) {
+    const chars = [...text];
+    if (chars.length < 2) return new Set(chars);
+    const out = new Set();
+    for (let i = 0; i < chars.length - 1; i++) out.add(chars[i] + chars[i + 1]);
+    return out;
+  }
+  // 0~1 的相近程度：完全相同 1；一方包含另一方 0.86；否则按二元组重合度。
+  function senseScore(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const short = a.length <= b.length ? a : b, long = a.length <= b.length ? b : a;
+    if (long.includes(short)) return 0.86;
+    const A = bigramSet(a), B = bigramSet(b);
+    let hit = 0;
+    for (const piece of A) if (B.has(piece)) hit++;
+    return (2 * hit) / ((A.size + B.size) || 1);
+  }
   function get(word, sense) {
     let key = wordKey(word);
     const wanted = senseKey(sense);
     if (!Object.hasOwn(data, key)) key = globalThis.ShiciMeanings?.lookupDetailed(word).key || key;
     if (!Object.hasOwn(data, key)) return null;
+    let best = null, bestScore = 0;
     for (const [names, en, zh, note] of data[key]) {
       const aliases = names.split('|'), primary = senseKey(aliases[0]);
-      const found = aliases.some(name => {
+      for (const name of aliases) {
         const alias = senseKey(name);
-        return wanted.body === alias.body && (!wanted.pos || wanted.pos === (alias.pos || primary.pos));
-      });
-      if (found) return { sense, en, zh, note };
+        if (wanted.body === alias.body && (!wanted.pos || wanted.pos === (alias.pos || primary.pos))) return { sense, en, zh, note };
+        // 词性明确冲突的义项不参与近似匹配，免得把动词例句配给名词释义。
+        const aliasPos = alias.pos || primary.pos;
+        if (wanted.pos && aliasPos && wanted.pos !== aliasPos) continue;
+        const score = senseScore(looseText(wanted.body), looseText(alias.body));
+        if (score > bestScore) { bestScore = score; best = { sense, en, zh, note }; }
+      }
     }
-    return null;
+    // 释义写得更长或换了个说法（「系统地做事」对「系统地」）时也取最接近的义项，不白丢例句。
+    return bestScore >= 0.55 ? best : null;
   }
   const draftKey = (word, sense) => JSON.stringify([wordKey(word), senseKey(sense)]);
   function savedSenses(meaning) {

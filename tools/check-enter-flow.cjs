@@ -270,6 +270,18 @@ const toast = () => evaluate("document.getElementById('toast').hidden ? '' : doc
     assert.equal(await evaluate("document.querySelectorAll('#word-list .example-missing').length"), 0, '展开后也不应出现占位文案');
     checks.push('词库列表：无例句不留空行，例句/写例句默认收起，点开才渲染');
 
+    // 11) 例句模糊匹配：释义写法不同也能配到最接近的那条，不相关的不乱配
+    const fuzzy = await evaluate(`(() => {
+      const exact = ShiciExamples.get('systematically', 'adv. 系统地');
+      const loose = ShiciExamples.get('systematically', '系统地做事');
+      const off = ShiciExamples.get('systematically', '完全没有关系的说法');
+      return { exact: exact?.en || '', loose: loose?.en || '', off: off ? off.en : '' };
+    })()`);
+    assert.ok(fuzzy.exact.length > 10, '写法一致的释义应命中例句');
+    assert.equal(fuzzy.loose, fuzzy.exact, '释义多写了几个字也应配到同一条例句');
+    assert.equal(fuzzy.off, '', '毫不相关的释义不应误配例句');
+    checks.push('例句模糊匹配：释义多写或少写也能配上，不相关的不误配');
+
     assert.equal(events.filter(e => e.method === 'Runtime.exceptionThrown').length, 0, '页面不应抛异常');
     checks.push('全程无 JS 异常');
 
