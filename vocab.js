@@ -186,12 +186,32 @@
     if (feedback) feedback.textContent = picked.length ? `已勾选 ${picked.length} 个意思：${picked.join('；')} —— 按回车收下` : '已取消勾选，回车就只收词典第 1 条。';
     return true;
   }
+  // 数字 0 / 点「自己写中文」：焦点交给中文释义框，已勾选的意思先带过去。
+  function enterManualMeaning() {
+    const meaningBox = $('meaning');
+    if (!$('word').value.trim()) { notify('先打一个英文单词，再按 0 自己写中文。'); $('word').focus(); return; }
+    const picked = [...document.querySelectorAll('#meaning-options input[type="checkbox"]:checked')].map(box => box.value.trim()).filter(Boolean);
+    if (picked.length && !meaningBox.value.trim()) meaningBox.value = picked.join('；');
+    const end = meaningBox.value.length;
+    meaningBox.focus();
+    meaningBox.setSelectionRange(end, end);
+    const feedback = $('meaning-feedback');
+    if (feedback) feedback.textContent = picked.length ? '已把勾选的意思带进中文框，可以接着补充；写好按回车收下，Esc 回单词框。' : '写自己的中文意思；写好按回车收下，Esc 回单词框。';
+  }
+  document.addEventListener('shici-manual-meaning', enterManualMeaning);
   $('word').addEventListener('keydown', event => {
     if (event.isComposing || event.keyCode === 229) return;
     if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+    if (event.key === '0') { event.preventDefault(); enterManualMeaning(); return; }
     if (!/^[1-9]$/.test(event.key)) return;
     if (!toggleMeaningByIndex(Number(event.key))) return;
     event.preventDefault();
+  });
+  // 中文框里按 Esc 回单词框，改词不用再摸鼠标。
+  $('meaning').addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || event.isComposing) return;
+    event.preventDefault();
+    $('word').focus();
   });
   // 单词框 / 释义框里按回车都等于「收下」；释义框 Shift+回车保留换行。
   for (const id of ['word', 'meaning']) {

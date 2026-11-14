@@ -106,6 +106,16 @@
     clearTimeout(timer); entries = []; query = ''; options.replaceChildren();
     actions.hidden = true; options.hidden = true; feedback.textContent = ''; manual.hidden = true; manual.value = '';
   }
+  // 「0 = 自己写中文」：始终排在列表末尾，按数字 0 或点一下就能进中文框。
+  function appendManualOption() {
+    const card = document.createElement('div'); card.className = 'meaning-sense-card meaning-manual';
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'meaning-manual-btn';
+    const badge = document.createElement('b'); badge.className = 'meaning-index'; badge.textContent = '0'; badge.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span'); text.textContent = '自己写中文（写好按回车收下）';
+    button.append(badge, text);
+    button.addEventListener('click', () => document.dispatchEvent(new CustomEvent('shici-manual-meaning')));
+    card.append(button); options.append(card);
+  }
   function render() {
     clear();
     query = input.value;
@@ -114,8 +124,11 @@
     if (!globalThis.SHICI_MEANINGS) { status.textContent = '本地词典未能加载，请保留 vocab-meanings 文件夹并刷新。仍可自行填写中文。'; return; }
     const match = lookupDetailed(query);
     entries = match.meanings;
-    if (!entries.length) { status.textContent = '暂未查到这个单词或完整短语。可先核对拼写，或在下方填写自己的中文意思。'; return; }
-    status.textContent = match.key !== normalize(query) ? `匹配到基础短语「${match.key}」。修饰词请结合句意理解；按数字键 1-9 勾选意思，回车收下。` : `「${query.trim()}」的释义参考：按数字键 1-9 勾选想要的意思（可多选），回车收下。`;
+    if (!entries.length) {
+      status.textContent = '暂未查到这个单词或完整短语。按 0 自己写中文，写好按回车收下。';
+      appendManualOption(); options.hidden = false; return;
+    }
+    status.textContent = match.key !== normalize(query) ? `匹配到基础短语「${match.key}」。修饰词请结合句意理解；按数字键 1-9 勾选意思，按 0 自己写，回车收下。` : `「${query.trim()}」的释义参考：按 1-9 勾选想要的意思（可多选），按 0 自己写，回车收下。`;
     entries.forEach((entry, index) => {
       const card = document.createElement('div'); card.className = 'meaning-sense-card';
       const label = document.createElement('label'); label.className = 'meaning-option';
@@ -133,6 +146,7 @@
       if (globalThis.ShiciExamples) card.append(ShiciExamples.exampleBlock(ShiciExamples.get(query, entry), query));
       options.append(card);
     });
+    appendManualOption();
     options.hidden = actions.hidden = false; updateActions();
   }
   function isCurrent() { if (query === input.value) return true; render(); return false; }

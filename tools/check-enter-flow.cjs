@@ -174,6 +174,44 @@ const toast = () => evaluate("document.getElementById('toast').hidden ? '' : doc
     assert.equal(await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]').length"), 0, '提交后应清空上一个词的释义选项');
     checks.push('数字键勾选：按 1、3 多选后回车收下两条；再按一次可取消；数字不会污染单词框');
 
+    // 7) 数字 0：进入自己写中文，勾选的意思先带入，补充完回车一起收下
+    const manualWord = await evaluate(`(() => {
+      const used = new Set(JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words.map(w => w.word.toLowerCase()));
+      for (const w of ['willow', 'harvest', 'stream', 'garden', 'wander', 'hollow']) {
+        if (used.has(w)) continue;
+        if ((window.ShiciMeanings?.lookup?.(w) || []).length >= 2) return w;
+      }
+      return '';
+    })()`);
+    assert.ok(manualWord, '应能找到一个未收录且有 2 条释义的词');
+    await type(manualWord);
+    await until("document.querySelectorAll('#meaning-options input[type=checkbox]').length >= 2");
+    assert.equal(await evaluate("document.querySelectorAll('.meaning-manual-btn').length"), 1, '列表末尾应有「自己写中文」入口');
+    const carried = await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]')[1].value");
+    await pressDigit('2');
+    await pressDigit('0');
+    assert.equal(await evaluate("document.activeElement.id"), 'meaning', '按 0 应把焦点交给中文框');
+    assert.equal(await evaluate("document.getElementById('meaning').value"), carried, '按 0 应把已勾选的释义带进中文框');
+    await send('Input.insertText', { text: '；自己补的一句' });
+    await pressEnter();
+    await until(`Number(document.getElementById('total').textContent) === ${before + 4}`);
+    const manualEntry = await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words[0]");
+    assert.ok(manualEntry.meaning.includes(carried) && manualEntry.meaning.includes('自己补的一句'), '带入的释义和自己的补充应一起入库');
+    assert.equal(await evaluate("document.activeElement.id"), 'word', '收下后焦点回到单词框');
+    checks.push('数字 0：进中文框、带入已勾选释义、补充后回车一起收下');
+
+    // 8) 词典查不到的词：按 0 直接写中文也能收下
+    await type('zzzqxw');
+    await until("document.querySelectorAll('.meaning-manual-btn').length === 1");
+    assert.equal(await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]').length"), 0, '查不到的词不应有勾选项');
+    await pressDigit('0');
+    assert.equal(await evaluate("document.activeElement.id"), 'meaning');
+    await send('Input.insertText', { text: '自造词测试义' });
+    await pressEnter();
+    await until(`Number(document.getElementById('total').textContent) === ${before + 5}`);
+    assert.equal(await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words[0].meaning"), '自造词测试义');
+    checks.push('词典查不到时，按 0 直接写中文并回车收下');
+
     assert.equal(events.filter(e => e.method === 'Runtime.exceptionThrown').length, 0, '页面不应抛异常');
     checks.push('全程无 JS 异常');
 
