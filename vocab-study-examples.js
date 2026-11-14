@@ -10,7 +10,9 @@
   function row(sense, example) {
     const group = document.createElement('div'); group.className = 'study-example-item';
     if (sense) { const title = document.createElement('p'); title.className = 'study-example-sense'; title.textContent = sense; group.append(title); }
-    group.append(ShiciExamples.exampleBlock(example)); list.append(group);
+    const block = ShiciExamples.exampleBlock(example);
+    if (block) group.append(block);
+    if (group.childElementCount) list.append(group);
   }
   function renderRemote(word, examples, preview) {
     list.replaceChildren();

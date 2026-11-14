@@ -51,18 +51,14 @@
     });
     return saved || get(word, sense);
   }
-  function exampleBlock(example, word = '') {
+  function exampleBlock(example) {
+    // 没有本地例句就什么都不渲染，不再输出「暂无例句」占位文字。
+    if (!example) return null;
     const box = document.createElement('div'); box.className = 'sense-example';
-    if (example) {
-      const en = document.createElement('p'); en.lang = 'en'; en.className = 'example-en'; en.textContent = example.en;
-      const zh = document.createElement('p'); zh.className = 'example-zh'; zh.textContent = example.zh;
-      box.append(en); if (example.zh) box.append(zh);
-      if (example.note) { const note = document.createElement('p'); note.className = 'example-note'; note.textContent = example.note; box.append(note); }
-    } else {
-      const empty = document.createElement('p'); empty.className = 'example-missing';
-      empty.textContent = word && !supportsRemoteWord(word) ? '此短语暂无本地例句；当前网络查询不支持完整短语。' : '此义项暂无本地例句。请在上方学习卡片选中该词，翻面后查看可用例句。';
-      box.append(empty);
-    }
+    const en = document.createElement('p'); en.lang = 'en'; en.className = 'example-en'; en.textContent = example.en;
+    const zh = document.createElement('p'); zh.className = 'example-zh'; zh.textContent = example.zh;
+    box.append(en); if (example.zh) box.append(zh);
+    if (example.note) { const note = document.createElement('p'); note.className = 'example-note'; note.textContent = example.note; box.append(note); }
     return box;
   }
   function editor(word, sense, example, onSave) {
@@ -87,7 +83,9 @@
       const group = document.createElement('div'); group.className = 'sense-group';
       const label = document.createElement('p'); label.className = 'sense-title'; label.textContent = sense;
       const example = resolved(word, sense, custom);
-      group.append(label, exampleBlock(example, word));
+      group.append(label);
+      const block = exampleBlock(example);
+      if (block) group.append(block);
       if (onSave) group.append(editor(word, sense, example, item => onSave(item)));
       box.append(group);
     }
@@ -97,9 +95,23 @@
     return savedSenses(meaning).map(sense => drafts.get(draftKey(word, sense))).filter(Boolean);
   }
   function renderSaved(entry) {
-    return renderGroups(entry.word, entry.meaning, entry.examples || [], example => {
-      document.dispatchEvent(new CustomEvent('shici-save-example', { detail: { id: entry.id, example } }));
+    // 词库里默认只留一行入口，点开才渲染例句与「写例句」，没有例句也不会多出空行。
+    const details = document.createElement('details'); details.className = 'saved-examples';
+    const summary = document.createElement('summary');
+    // 有例句就显示「例句」，纯无例句的词只给「写例句」，避免让人以为有内容可看。
+    const hasAny = savedSenses(entry.meaning).some(sense => resolved(entry.word, sense, entry.examples || []));
+    summary.textContent = hasAny ? '例句 / 写例句' : '写例句';
+    const body = document.createElement('div'); body.className = 'saved-examples-body';
+    let built = false;
+    details.addEventListener('toggle', () => {
+      if (!details.open || built) return;
+      built = true;
+      body.append(renderGroups(entry.word, entry.meaning, entry.examples || [], example => {
+        document.dispatchEvent(new CustomEvent('shici-save-example', { detail: { id: entry.id, example } }));
+      }));
     });
+    details.append(summary, body);
+    return details;
   }
   function supportsRemoteWord(word) {
     const key = wordKey(word);

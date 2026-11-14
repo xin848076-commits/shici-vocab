@@ -20,6 +20,12 @@
 .sense-example-toggle>summary::marker,.sense-example-toggle>summary::-webkit-details-marker{display:none}
 .sense-example-toggle>summary::before{content:'▸ '}
 .sense-example-toggle[open]>summary::before{content:'▾ '}
+.saved-examples{margin-top:3px}
+.saved-examples>summary{display:inline-block;font-size:11px;color:var(--muted);cursor:pointer;list-style:none}
+.saved-examples>summary::marker,.saved-examples>summary::-webkit-details-marker{display:none}
+.saved-examples>summary::before{content:'▸ '}
+.saved-examples[open]>summary::before{content:'▾ '}
+.saved-examples-body{margin-top:6px}
 .meaning-option{display:flex;align-items:baseline;gap:5px;margin:0;padding:6px 8px;background:var(--paper);border:1px solid #dce5d5;border-radius:7px;font-size:12px;cursor:pointer;max-width:100%;overflow-wrap:anywhere}
 .meaning-option:has(input:checked){background:#dfeeda;border-color:#799c6c;color:#244d30}
 .meaning-option input{width:13px;height:13px;flex-shrink:0;margin:0;padding:0;accent-color:var(--green)}

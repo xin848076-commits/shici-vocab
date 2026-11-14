@@ -258,6 +258,18 @@ const toast = () => evaluate("document.getElementById('toast').hidden ? '' : doc
     assert.equal(await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words[0].meaning"), deepSenses[5]);
     checks.push('释义多时：↓ 逐条下移并自动滚到可见，空格勾选、回车收下');
 
+    // 10) 词库列表：无例句不留占位；例句/写例句默认收起，点开才渲染
+    assert.equal(await evaluate("document.querySelectorAll('#word-list .example-missing').length"), 0, '词库列表不应出现「暂无例句」占位');
+    assert.equal(await evaluate("document.querySelectorAll('#word-list details.saved-examples[open]').length"), 0, '例句区默认应收起');
+    assert.equal(await evaluate("document.querySelectorAll('#word-list .example-editor').length"), 0, '未点开时不应渲染写例句表单');
+    assert.ok(await evaluate("!!document.querySelector('#word-list details.saved-examples summary')"), '每个词应有例句/写例句入口');
+    await evaluate("document.querySelector('#word-list details.saved-examples summary').click()");
+    await wait(300);
+    assert.ok(await evaluate("document.querySelectorAll('#word-list details.saved-examples[open]').length > 0"), '点开例句区应展开');
+    assert.ok(await evaluate("document.querySelectorAll('#word-list .example-editor').length > 0"), '展开后应出现写例句入口');
+    assert.equal(await evaluate("document.querySelectorAll('#word-list .example-missing').length"), 0, '展开后也不应出现占位文案');
+    checks.push('词库列表：无例句不留空行，例句/写例句默认收起，点开才渲染');
+
     assert.equal(events.filter(e => e.method === 'Runtime.exceptionThrown').length, 0, '页面不应抛异常');
     checks.push('全程无 JS 异常');
 
