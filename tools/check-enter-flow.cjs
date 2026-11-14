@@ -46,6 +46,13 @@ async function pressEnter(shift = false) {
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13, modifiers });
   await wait(250);
 }
+// 真实按键：keydown 带 text，若页面 preventDefault 则数字不会写进输入框。
+async function pressDigit(digit) {
+  const code = 48 + Number(digit);
+  await send('Input.dispatchKeyEvent', { type: 'keyDown', key: digit, code: `Digit${digit}`, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code, text: digit });
+  await send('Input.dispatchKeyEvent', { type: 'keyUp', key: digit, code: `Digit${digit}`, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+  await wait(150);
+}
 const total = () => evaluate("Number(document.getElementById('total').textContent)");
 const toast = () => evaluate("document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent");
 
@@ -136,6 +143,36 @@ const toast = () => evaluate("document.getElementById('toast').hidden ? '' : doc
     await until(`Number(document.getElementById('total').textContent) === ${before + 2}`);
     assert.equal(await evaluate("document.activeElement.id"), 'word');
     checks.push('连续录入两个词，全程回车，无需鼠标');
+
+    // 6) 数字键勾选：按 1、3 多选释义，回车一次收下两条，数字不会写进单词框
+    const multiWord = await evaluate(`(() => {
+      const used = new Set(JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words.map(w => w.word.toLowerCase()));
+      for (const w of ['spring', 'light', 'set', 'run', 'hold', 'fine']) {
+        if (used.has(w)) continue;
+        if ((window.ShiciMeanings?.lookup?.(w) || []).length >= 3) return w;
+      }
+      return '';
+    })()`);
+    assert.ok(multiWord, '应能找到一个未收录且有 3 条以上释义的词');
+    await type(multiWord);
+    await until("document.querySelectorAll('#meaning-options input[type=checkbox]').length >= 3");
+    assert.ok(await evaluate("document.querySelectorAll('.meaning-index').length >= 3"), '释义应带数字序号');
+    const senseA = await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]')[0].value");
+    const senseC = await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]')[2].value");
+    await pressDigit('1');
+    await pressDigit('3');
+    assert.equal(await evaluate("document.getElementById('word').value"), multiWord, '数字键不应写进单词框');
+    assert.equal(await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]:checked').length"), 2, '按 1、3 应勾选两条');
+    await pressDigit('1');
+    assert.equal(await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]:checked').length"), 1, '再按一次同一数字应取消勾选');
+    await pressDigit('1');
+    await pressEnter();
+    await until(`Number(document.getElementById('total').textContent) === ${before + 3}`);
+    const multi = await evaluate("JSON.parse(localStorage.getItem('shici.vocabulary.v1')).words[0]");
+    assert.equal(multi.meaning, `${senseA}；${senseC}`, '两条勾选释义都应入库');
+    assert.ok((await toast()).includes('2 个意思'), '提示应说明收了几个意思');
+    assert.equal(await evaluate("document.querySelectorAll('#meaning-options input[type=checkbox]').length"), 0, '提交后应清空上一个词的释义选项');
+    checks.push('数字键勾选：按 1、3 多选后回车收下两条；再按一次可取消；数字不会污染单词框');
 
     assert.equal(events.filter(e => e.method === 'Runtime.exceptionThrown').length, 0, '页面不应抛异常');
     checks.push('全程无 JS 异常');

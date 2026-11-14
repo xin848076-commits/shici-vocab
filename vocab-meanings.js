@@ -115,17 +115,24 @@
     const match = lookupDetailed(query);
     entries = match.meanings;
     if (!entries.length) { status.textContent = '暂未查到这个单词或完整短语。可先核对拼写，或在下方填写自己的中文意思。'; return; }
-    status.textContent = match.key !== normalize(query) ? `匹配到基础短语「${match.key}」。修饰词请结合句意理解；可勾选释义加入中文框。` : `「${query.trim()}」的释义参考：勾选想记的意思，再加入中文框。`;
-    for (const entry of entries) {
+    status.textContent = match.key !== normalize(query) ? `匹配到基础短语「${match.key}」。修饰词请结合句意理解；按数字键 1-9 勾选意思，回车收下。` : `「${query.trim()}」的释义参考：按数字键 1-9 勾选想要的意思（可多选），回车收下。`;
+    entries.forEach((entry, index) => {
       const card = document.createElement('div'); card.className = 'meaning-sense-card';
       const label = document.createElement('label'); label.className = 'meaning-option';
       const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.value = entry;
       checkbox.addEventListener('change', updateActions);
       const text = document.createElement('span'); text.textContent = entry;
-      label.append(checkbox, text); card.append(label);
+      label.append(checkbox, text);
+      // 前 9 条带序号：焦点在单词框时按数字键即可开关，不用鼠标。
+      if (index < 9) {
+        const badge = document.createElement('b'); badge.className = 'meaning-index';
+        badge.textContent = String(index + 1); badge.setAttribute('aria-hidden', 'true');
+        label.prepend(badge);
+      }
+      card.append(label);
       if (globalThis.ShiciExamples) card.append(ShiciExamples.exampleBlock(ShiciExamples.get(query, entry), query));
       options.append(card);
-    }
+    });
     options.hidden = actions.hidden = false; updateActions();
   }
   function isCurrent() { if (query === input.value) return true; render(); return false; }

@@ -165,10 +165,33 @@
       else { notify('本地词典没有这个词，请填一下中文释义再按回车。'); meaningBox.focus(); return; }
     }
     if (change(() => { const entry = { id: uid(), word, meaning, status: 'new', reviews: 0, lastReviewed: null, garden: { stage: 0, lastGrowthDay: null } }; const examples = globalThis.ShiciExamples?.draftExamples(word, meaning); if (examples?.length) entry.examples = examples; state.words.unshift(entry); state.currentId = entry.id; state.mode = 'all'; flipped = false; })) {
+      const pickedCount = meaning.split(/[;；]/).map(part => part.trim()).filter(Boolean).length;
       $('add-form').reset();
+      // 清空单词框后让释义区自己收起，避免下一个词打字前残留上一个词的选项。
+      $('word').dispatchEvent(new Event('input', { bubbles: true }));
       $('word').focus();
-      notify(`已收下「${word}」${autoFilled ? '（释义取自词典第 1 条，可在上下文中再核对）' : ''}，继续打下一个，回车就收下。`);
+      const picked = pickedCount > 1 ? `（${pickedCount} 个意思）` : autoFilled ? '（释义取自词典第 1 条，可在上下文中再核对）' : '';
+      notify(`已收下「${word}」${picked}，继续打下一个，回车就收下。`);
     }
+  });
+  // 数字键勾选：焦点在单词框时，按 1-9 开关对应释义，收多个意思不用碰鼠标。
+  function toggleMeaningByIndex(index) {
+    const boxes = [...document.querySelectorAll('#meaning-options input[type="checkbox"]')];
+    const box = boxes[index - 1];
+    if (!box) return false;
+    box.checked = !box.checked;
+    box.dispatchEvent(new Event('change', { bubbles: true }));
+    const picked = boxes.filter(item => item.checked).map(item => item.value);
+    const feedback = $('meaning-feedback');
+    if (feedback) feedback.textContent = picked.length ? `已勾选 ${picked.length} 个意思：${picked.join('；')} —— 按回车收下` : '已取消勾选，回车就只收词典第 1 条。';
+    return true;
+  }
+  $('word').addEventListener('keydown', event => {
+    if (event.isComposing || event.keyCode === 229) return;
+    if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+    if (!/^[1-9]$/.test(event.key)) return;
+    if (!toggleMeaningByIndex(Number(event.key))) return;
+    event.preventDefault();
   });
   // 单词框 / 释义框里按回车都等于「收下」；释义框 Shift+回车保留换行。
   for (const id of ['word', 'meaning']) {
